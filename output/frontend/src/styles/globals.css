@@ -1,0 +1,644 @@
+/**
+ * GLOBALS.CSS — Ana Castellano Florista
+ * =======================================
+ * Variables CSS del sistema de diseño + reset + estilos base.
+ * Este archivo es la fuente de verdad de todos los tokens de diseño.
+ * Tailwind extiende estos valores; los componentes los consumen directamente.
+ *
+ * Estructura:
+ *  1. @import — Google Fonts
+ *  2. :root  — tokens de diseño (colores, tipografía, espaciado, etc.)
+ *  3. [data-theme="admin"] — overrides para el panel de administración
+ *  4. Reset & base styles
+ *  5. Estilos de tipografía base
+ *  6. Utilidades de scroll y selección
+ */
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   1. FUENTES — Google Fonts
+   Cormorant Garamond: serif de display, elegante, para títulos
+   Jost: sans-serif geométrica, limpia, para cuerpo
+   ───────────────────────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   2. TOKENS DE DISEÑO — :root
+   Todos los valores del sistema expresados como custom properties.
+   Nomenclatura: --ac-[categoría]-[variante]
+   "ac" = Ana Castellano, evita colisiones con otras librerías.
+   ───────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* ── COLORES DE FONDO ─────────────────────────────────────────────────── */
+  --ac-bg-primary:    #FDFCF9;  /* Fondo principal — blanco marfil cálido */
+  --ac-bg-secondary:  #FAF7F2;  /* Secciones alternas — marfil */
+  --ac-bg-tertiary:   #F5EFE6;  /* Cards, inputs — beige pálido */
+  --ac-bg-border:     #EDE3D5;  /* Beige medio — separadores suaves */
+  --ac-bg-divider:    #D9CBBA;  /* Líneas divisoras más visibles */
+
+  /* ── COLORES DE TEXTO ─────────────────────────────────────────────────── */
+  --ac-text-primary:   #1A1714;  /* Títulos principales — negro suave */
+  --ac-text-body:      #2E2B27;  /* Cuerpo de texto — gris muy oscuro */
+  --ac-text-secondary: #4A4640;  /* Texto secundario, labels */
+  --ac-text-muted:     #6B6560;  /* Placeholders, captions */
+  --ac-text-disabled:  #9C968F;  /* Texto deshabilitado */
+  --ac-text-inverse:   #FDFCF9;  /* Texto sobre fondos oscuros */
+
+  /* ── VERDE SAGE — color de marca principal ────────────────────────────── */
+  --ac-sage-50:   #F4F6F2;
+  --ac-sage-100:  #E4EAE0;
+  --ac-sage-200:  #C8D4C2;
+  --ac-sage-300:  #A8BAA0;
+  --ac-sage-400:  #7F9A76;
+  --ac-sage-500:  #5C7A52;  /* SAGE PRINCIPAL */
+  --ac-sage-600:  #4A6341;  /* Hover de botón primario */
+  --ac-sage-700:  #384D32;
+  --ac-sage-800:  #273624;
+  --ac-sage-900:  #182118;
+
+  /* ── ROSA BLUSH — acento secundario ──────────────────────────────────── */
+  --ac-blush-50:  #FDF8F6;
+  --ac-blush-100: #FAF0EC;
+  --ac-blush-200: #F3DDD6;
+  --ac-blush-300: #E8C4B8;
+  --ac-blush-400: #D99E8C;
+  --ac-blush-500: #C4795E;  /* BLUSH PRINCIPAL */
+  --ac-blush-600: #A85E45;
+
+  /* ── DORADO — detalles de lujo ──────────────────────────────────────── */
+  --ac-gold-100:  #F9F3E3;
+  --ac-gold-200:  #EFE0B0;
+  --ac-gold-300:  #D4B86A;  /* Separadores ornamentales */
+  --ac-gold-400:  #B8943A;  /* DORADO PRINCIPAL */
+  --ac-gold-500:  #8C6D1F;
+
+  /* ── COLORES SEMÁNTICOS — estados de UI ──────────────────────────────── */
+  /* Reserva pendiente */
+  --ac-pending-bg:      #FEF9EC;
+  --ac-pending-text:    #8C6D1F;
+  --ac-pending-border:  #D4B86A;
+
+  /* Reserva aceptada / éxito */
+  --ac-success-bg:      #F0F6EE;
+  --ac-success-text:    #3A6434;
+  --ac-success-border:  #7F9A76;
+
+  /* Reserva rechazada / error */
+  --ac-error-bg:        #FDF2F0;
+  --ac-error-text:      #A83022;
+  --ac-error-border:    #D98070;
+
+  /* Informativo */
+  --ac-info-bg:         #EEF2F8;
+  --ac-info-text:       #2C4A7A;
+  --ac-info-border:     #7298CC;
+
+  /* ── TIPOGRAFÍA ──────────────────────────────────────────────────────── */
+  --ac-font-serif: 'Cormorant Garamond', Georgia, serif;
+  --ac-font-sans:  'Jost', 'Helvetica Neue', Arial, sans-serif;
+  --ac-font-mono:  'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Escala de tamaños — proporción Major Third 1.25 */
+  --ac-text-xs:   0.75rem;    /* 12px */
+  --ac-text-sm:   0.875rem;   /* 14px */
+  --ac-text-base: 1rem;       /* 16px */
+  --ac-text-lg:   1.125rem;   /* 18px */
+  --ac-text-xl:   1.25rem;    /* 20px */
+  --ac-text-2xl:  1.5rem;     /* 24px */
+  --ac-text-3xl:  1.875rem;   /* 30px */
+  --ac-text-4xl:  2.25rem;    /* 36px */
+  --ac-text-5xl:  3rem;       /* 48px */
+  --ac-text-6xl:  3.75rem;    /* 60px */
+  --ac-text-7xl:  4.5rem;     /* 72px */
+
+  /* Letter-spacing por tamaño */
+  --ac-tracking-tight:  -0.025em;  /* Títulos grandes */
+  --ac-tracking-snug:   -0.01em;
+  --ac-tracking-normal:  0;
+  --ac-tracking-wide:    0.04em;   /* Labels, badges */
+  --ac-tracking-wider:   0.08em;   /* All-caps elementos decorativos */
+  --ac-tracking-widest:  0.15em;   /* Overline text */
+
+  /* Line-heights */
+  --ac-leading-none:    1;
+  --ac-leading-tight:   1.15;
+  --ac-leading-snug:    1.3;
+  --ac-leading-normal:  1.5;
+  --ac-leading-relaxed: 1.65;
+  --ac-leading-loose:   1.8;
+
+  /* ── ESPACIADO — sistema 8pt ─────────────────────────────────────────── */
+  --ac-space-1:  4px;
+  --ac-space-2:  8px;
+  --ac-space-3:  12px;
+  --ac-space-4:  16px;
+  --ac-space-5:  20px;
+  --ac-space-6:  24px;
+  --ac-space-8:  32px;
+  --ac-space-10: 40px;
+  --ac-space-12: 48px;
+  --ac-space-16: 64px;
+  --ac-space-20: 80px;
+  --ac-space-24: 96px;
+  --ac-space-32: 128px;
+
+  /* Tokens semánticos de espaciado de sección */
+  --ac-section-padding-mobile:  64px;
+  --ac-section-padding-tablet:  96px;
+  --ac-section-padding-desktop: 128px;
+
+  /* Contenedor máximo */
+  --ac-container-max: 1200px;
+  --ac-container-padding-mobile:  24px;
+  --ac-container-padding-tablet:  48px;
+  --ac-container-padding-desktop: 80px;
+
+  /* ── BORDER RADIUS ───────────────────────────────────────────────────── */
+  --ac-radius-sm:  2px;
+  --ac-radius-md:  4px;    /* Default — inputs, badges pequeños */
+  --ac-radius-lg:  6px;    /* Cards pequeñas */
+  --ac-radius-xl:  8px;    /* Cards estándar */
+  --ac-radius-2xl: 12px;   /* Cards grandes */
+  --ac-radius-3xl: 24px;   /* Pills */
+  --ac-radius-full: 9999px;
+
+  /* ── SOMBRAS ─────────────────────────────────────────────────────────── */
+  /* Tinte cálido rgba(26,23,20) en vez de negro puro */
+  --ac-shadow-xs: 0 1px 2px 0 rgba(26, 23, 20, 0.04);
+  --ac-shadow-sm: 0 1px 3px 0 rgba(26, 23, 20, 0.06), 0 1px 2px -1px rgba(26, 23, 20, 0.04);
+  --ac-shadow:    0 2px 8px 0 rgba(26, 23, 20, 0.08), 0 1px 3px -1px rgba(26, 23, 20, 0.05);
+  --ac-shadow-md: 0 4px 16px 0 rgba(26, 23, 20, 0.10), 0 2px 6px -2px rgba(26, 23, 20, 0.06);
+  --ac-shadow-lg: 0 8px 24px 0 rgba(26, 23, 20, 0.12), 0 4px 10px -3px rgba(26, 23, 20, 0.08);
+  --ac-shadow-xl: 0 16px 40px 0 rgba(26, 23, 20, 0.14), 0 8px 16px -4px rgba(26, 23, 20, 0.08);
+
+  /* Sombras con color de marca */
+  --ac-shadow-sage: 0 4px 16px 0 rgba(92, 122, 82, 0.28), 0 1px 4px 0 rgba(92, 122, 82, 0.16);
+  --ac-shadow-gold: 0 2px 12px 0 rgba(184, 148, 58, 0.20);
+
+  /* ── TRANSICIONES ────────────────────────────────────────────────────── */
+  --ac-duration-fast:   120ms;
+  --ac-duration-base:   200ms;
+  --ac-duration-slow:   320ms;
+  --ac-duration-slower: 480ms;
+  --ac-duration-hero:   600ms;
+
+  --ac-ease-default:   cubic-bezier(0.4, 0, 0.2, 1);
+  --ac-ease-in:        cubic-bezier(0.4, 0, 1, 1);
+  --ac-ease-out:       cubic-bezier(0, 0, 0.2, 1);
+  --ac-ease-soft-out:  cubic-bezier(0.2, 0.8, 0.4, 1);
+
+  /* ── BORDES ──────────────────────────────────────────────────────────── */
+  --ac-border-light:   1px solid #EDE3D5;  /* Bordes sutiles */
+  --ac-border-default: 1px solid #D9CBBA;  /* Bordes estándar */
+  --ac-border-input:   1px solid #C8C2BB;  /* Bordes de inputs */
+  --ac-border-gold:    1px solid #D4B86A;  /* Bordes decorativos dorados */
+  --ac-border-sage:    1px solid #A8BAA0;  /* Bordes con color sage */
+
+  /* ── ORNAMENTO — línea dorada decorativa ────────────────────────────── */
+  /* Usada en separadores de sección, bajo títulos de hero */
+  --ac-ornament-gradient: linear-gradient(90deg,
+    transparent 0%,
+    #D4B86A 30%,
+    #B8943A 50%,
+    #D4B86A 70%,
+    transparent 100%
+  );
+
+  /* ── HEADER ──────────────────────────────────────────────────────────── */
+  --ac-header-height: 80px;
+  --ac-header-height-scrolled: 64px;
+
+  /* ── Z-INDEX ─────────────────────────────────────────────────────────── */
+  --ac-z-behind:   -1;
+  --ac-z-base:      0;
+  --ac-z-raised:    10;
+  --ac-z-overlay:   20;
+  --ac-z-dropdown:  30;
+  --ac-z-sticky:    40;
+  --ac-z-modal:     50;
+  --ac-z-toast:     60;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   3. TEMA ADMIN — overrides para el panel de administración
+   Aplicar al elemento raíz del panel: <div data-theme="admin">
+   ───────────────────────────────────────────────────────────────────────────── */
+[data-theme="admin"] {
+  --ac-bg-primary:    #F7F6F4;  /* Fondo ligeramente más frío/neutro */
+  --ac-bg-secondary:  #EFECE8;
+  --ac-bg-tertiary:   #FFFFFF;  /* Cards en blanco puro para claridad de datos */
+  --ac-bg-border:     #E5E0DA;
+
+  /* En admin, los textos son un poco más contrastados para escaneo rápido */
+  --ac-text-primary:   #17140F;
+  --ac-text-body:      #2A2723;
+
+  /* El sidebar usa charcoal oscuro */
+  --ac-admin-sidebar:           #2E2B27;
+  --ac-admin-sidebar-text:      #C8C2BB;
+  --ac-admin-sidebar-active:    #5C7A52;
+  --ac-admin-sidebar-hover:     rgba(92, 122, 82, 0.12);
+  --ac-admin-sidebar-border:    rgba(200, 194, 187, 0.12);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   4. RESET & BASE STYLES
+   Reset opinionado adaptado a la estética del proyecto.
+   ───────────────────────────────────────────────────────────────────────────── */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+    /* Antialiasing para tipografía más refinada */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    font-family: var(--ac-font-sans);
+    font-size: var(--ac-text-base);
+    line-height: var(--ac-leading-relaxed);
+    color: var(--ac-text-body);
+    background-color: var(--ac-bg-primary);
+    /* Previene scroll horizontal accidental */
+    overflow-x: hidden;
+  }
+
+  /* ── Focus visible — accesibilidad ──────────────────────────────────── */
+  /* Usamos outline personalizado en vez del default del browser */
+  :focus-visible {
+    outline: 2px solid var(--ac-sage-500);
+    outline-offset: 3px;
+    border-radius: var(--ac-radius-md);
+  }
+
+  /* Quita el outline cuando no es navegación por teclado */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* ── Imágenes ────────────────────────────────────────────────────────── */
+  img,
+  video {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* ── Links base ──────────────────────────────────────────────────────── */
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  /* ── Botones base ────────────────────────────────────────────────────── */
+  button {
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+  }
+
+  /* ── Inputs base ─────────────────────────────────────────────────────── */
+  input,
+  textarea,
+  select {
+    font-family: var(--ac-font-sans);
+    font-size: var(--ac-text-base);
+  }
+
+  /* ── Listas ──────────────────────────────────────────────────────────── */
+  ul, ol {
+    list-style: none;
+  }
+
+  /* ── Hr — separador base ─────────────────────────────────────────────── */
+  hr {
+    border: none;
+    border-top: var(--ac-border-light);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   5. TIPOGRAFÍA BASE
+   Estilos tipográficos aplicados a los elementos HTML nativos.
+   Los componentes pueden sobreescribir con clases de Tailwind.
+   ───────────────────────────────────────────────────────────────────────────── */
+@layer base {
+  /* Headings — siempre en Cormorant Garamond */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--ac-font-serif);
+    color: var(--ac-text-primary);
+    line-height: var(--ac-leading-snug);
+    font-weight: 400; /* Cormorant Garamond es elegante en regular, no en bold */
+  }
+
+  h1 {
+    font-size: var(--ac-text-5xl);
+    letter-spacing: var(--ac-tracking-tight);
+    line-height: var(--ac-leading-tight);
+  }
+
+  h2 {
+    font-size: var(--ac-text-4xl);
+    letter-spacing: -0.015em;
+    line-height: var(--ac-leading-snug);
+  }
+
+  h3 {
+    font-size: var(--ac-text-3xl);
+    letter-spacing: -0.01em;
+  }
+
+  h4 {
+    font-size: var(--ac-text-2xl);
+    letter-spacing: 0;
+  }
+
+  h5 {
+    font-size: var(--ac-text-xl);
+    font-weight: 500;
+  }
+
+  h6 {
+    font-size: var(--ac-text-base);
+    font-weight: 600;
+    letter-spacing: var(--ac-tracking-wide);
+    text-transform: uppercase;
+    font-family: var(--ac-font-sans); /* H6 en sans para etiquetas */
+  }
+
+  /* Párrafos */
+  p {
+    font-family: var(--ac-font-sans);
+    line-height: var(--ac-leading-relaxed);
+    color: var(--ac-text-body);
+    max-width: 72ch; /* Longitud de línea óptima para legibilidad */
+  }
+
+  /* Lead / intro paragraph */
+  p.lead {
+    font-size: var(--ac-text-lg);
+    color: var(--ac-text-secondary);
+    line-height: var(--ac-leading-loose);
+  }
+
+  /* Blockquote — para testimonios */
+  blockquote {
+    font-family: var(--ac-font-serif);
+    font-size: var(--ac-text-2xl);
+    font-style: italic;
+    color: var(--ac-text-primary);
+    line-height: var(--ac-leading-relaxed);
+    padding-left: var(--ac-space-6);
+    border-left: 2px solid var(--ac-gold-300);
+  }
+
+  /* Caption / pequeño texto */
+  small, .caption {
+    font-size: var(--ac-text-xs);
+    color: var(--ac-text-muted);
+    letter-spacing: var(--ac-tracking-wide);
+  }
+
+  /* Label — para formularios */
+  label {
+    font-size: var(--ac-text-sm);
+    font-weight: 500;
+    color: var(--ac-text-secondary);
+    letter-spacing: var(--ac-tracking-wide);
+  }
+
+  /* Strong */
+  strong, b {
+    font-weight: 600;
+  }
+
+  /* Em / italic — usa la versión cursiva de Cormorant si está en serif */
+  em, i {
+    font-style: italic;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   6. UTILIDADES BASE — scroll, selección, y helpers globales
+   ───────────────────────────────────────────────────────────────────────────── */
+@layer base {
+  /* Selección de texto */
+  ::selection {
+    background-color: rgba(92, 122, 82, 0.18); /* Sage translúcido */
+    color: var(--ac-text-primary);
+  }
+
+  /* Scrollbar personalizada — sutil y elegante (Webkit) */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--ac-bg-secondary);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--ac-bg-divider);
+    border-radius: var(--ac-radius-full);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--ac-text-disabled);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   7. LAYOUT HELPERS — clases base de contenedor y sección
+   ───────────────────────────────────────────────────────────────────────────── */
+@layer utilities {
+  /* Contenedor principal — centrado con padding responsive */
+  .container-ac {
+    width: 100%;
+    max-width: var(--ac-container-max);
+    margin-inline: auto;
+    padding-inline: var(--ac-container-padding-mobile);
+  }
+
+  @media (min-width: 768px) {
+    .container-ac {
+      padding-inline: var(--ac-container-padding-tablet);
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .container-ac {
+      padding-inline: var(--ac-container-padding-desktop);
+    }
+  }
+
+  /* Padding vertical de sección */
+  .section-padding {
+    padding-block: var(--ac-section-padding-mobile);
+  }
+
+  @media (min-width: 768px) {
+    .section-padding {
+      padding-block: var(--ac-section-padding-tablet);
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .section-padding {
+      padding-block: var(--ac-section-padding-desktop);
+    }
+  }
+
+  /* Línea ornamental dorada — separador de sección elegante */
+  .ornament-line {
+    width: 80px;
+    height: 1px;
+    background: var(--ac-ornament-gradient);
+    margin-inline: auto;
+  }
+
+  /* Overline — texto pequeño en mayúsculas sobre títulos */
+  .overline {
+    font-family: var(--ac-font-sans);
+    font-size: var(--ac-text-xs);
+    font-weight: 500;
+    letter-spacing: var(--ac-tracking-widest);
+    text-transform: uppercase;
+    color: var(--ac-sage-500);
+  }
+
+  /* Título de sección — patrón: overline + título serif */
+  .section-title {
+    font-family: var(--ac-font-serif);
+    font-size: clamp(2rem, 4vw, 2.5rem);
+    font-weight: 400;
+    color: var(--ac-text-primary);
+    letter-spacing: -0.01em;
+    line-height: var(--ac-leading-snug);
+  }
+
+  /* Subheading de sección */
+  .section-subtitle {
+    font-family: var(--ac-font-sans);
+    font-size: var(--ac-text-lg);
+    color: var(--ac-text-muted);
+    line-height: var(--ac-leading-loose);
+    max-width: 56ch;
+    margin-inline: auto;
+  }
+
+  /* Aspecto de imagen floral — ligeramente vertical */
+  .aspect-floral {
+    aspect-ratio: 4 / 5;
+  }
+
+  /* Transición suave por defecto para elementos interactivos */
+  .transition-ac {
+    transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+    transition-duration: var(--ac-duration-base);
+    transition-timing-function: var(--ac-ease-default);
+  }
+
+  /* Animaciones de entrada */
+  .animate-fade-in {
+    animation: fade-in 400ms var(--ac-ease-soft-out) both;
+  }
+
+  .animate-fade-in-scale {
+    animation: fade-in-scale 300ms var(--ac-ease-soft-out) both;
+  }
+
+  /* Delay helpers para animaciones escalonadas */
+  .animation-delay-100 { animation-delay: 100ms; }
+  .animation-delay-200 { animation-delay: 200ms; }
+  .animation-delay-300 { animation-delay: 300ms; }
+  .animation-delay-400 { animation-delay: 400ms; }
+
+  /* Texto con gradiente sage — para acentos tipográficos */
+  .text-gradient-sage {
+    background: linear-gradient(135deg, var(--ac-sage-500) 0%, var(--ac-sage-400) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Backdrop blur para overlays */
+  .backdrop-ac {
+    backdrop-filter: blur(12px) saturate(1.2);
+    -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  }
+
+  /* Truncar texto a N líneas */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   8. KEYFRAMES — definición de animaciones
+   ───────────────────────────────────────────────────────────────────────────── */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Shimmer — para skeleton loaders */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}

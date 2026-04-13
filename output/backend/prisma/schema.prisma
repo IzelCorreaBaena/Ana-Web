@@ -1,0 +1,124 @@
+// =============================================================================
+// AnaCastellano Florista — Prisma Schema
+// Database: PostgreSQL
+// ORM: Prisma
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// ADMIN
+// Gestiona el acceso al panel de administración.
+// Se asume multi-admin con RBAC básico vía rol, aunque el caso de uso
+// inicial es un único administrador (Ana Castellano).
+// =============================================================================
+model Admin {
+  id           String   @id @default(uuid()) @db.Uuid
+  username     String   @unique @db.VarChar(50)
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@map("admins")
+}
+
+// =============================================================================
+// SERVICIO
+// Categoría principal de servicios ofrecidos por la florista.
+// Cada servicio puede contener múltiples bloques de contenido.
+// =============================================================================
+model Servicio {
+  id          String   @id @default(uuid()) @db.Uuid
+  titulo      String   @db.VarChar(150)
+  descripcion String   @db.Text
+  orden       Int      @default(0)
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  // Relaciones
+  bloques  Bloque[]
+  reservas Reserva[]
+
+  // Índices
+  @@index([activo], name: "idx_servicios_activo")
+  @@index([orden], name: "idx_servicios_orden")
+  @@map("servicios")
+}
+
+// =============================================================================
+// BLOQUE
+// Sub-elemento de contenido dentro de un Servicio.
+// Permite estructurar el servicio en secciones con imágenes propias.
+// El campo `imagenes` almacena un array de URLs (strings).
+// =============================================================================
+model Bloque {
+  id          String   @id @default(uuid()) @db.Uuid
+  titulo      String   @db.VarChar(150)
+  descripcion String   @db.Text
+  imagenes    String[] // Array de URLs — almacenado como TEXT[] en PostgreSQL
+  orden       Int      @default(0)
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  // FK
+  servicioId String   @map("servicio_id") @db.Uuid
+  servicio   Servicio @relation(fields: [servicioId], references: [id], onDelete: Cascade)
+
+  // Índices
+  @@index([servicioId], name: "idx_bloques_servicio_id")
+  @@index([activo], name: "idx_bloques_activo")
+  @@index([servicioId, orden], name: "idx_bloques_servicio_orden")
+  @@map("bloques")
+}
+
+// =============================================================================
+// RESERVA
+// Solicitudes de clientes. Incluye el estado del flujo de gestión,
+// referencia al servicio, datos de contacto y metadatos de Google Calendar.
+// El campo `servicioId` es FK opcional — si el servicio fue eliminado,
+// la reserva conserva el historial mediante `servicioNombre`.
+// =============================================================================
+enum EstadoReserva {
+  PENDIENTE
+  ACEPTADA
+  RECHAZADA
+}
+
+model Reserva {
+  id             String        @id @default(uuid()) @db.Uuid
+  nombre         String        @db.VarChar(150)
+  telefono       String        @db.VarChar(25)
+  email          String        @db.VarChar(255)
+  mensaje        String        @db.Text
+  estado         EstadoReserva @default(PENDIENTE)
+  fechaEvento    DateTime?     @map("fecha_evento") @db.Timestamptz()
+  notas          String?       @db.Text // Notas internas del admin
+  googleEventId  String?       @unique @map("google_event_id") @db.VarChar(255)
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz()
+
+  // FK opcional — si el servicio se elimina, la reserva persiste con SET NULL
+  servicioId     String?       @map("servicio_id") @db.Uuid
+  servicio       Servicio?     @relation(fields: [servicioId], references: [id], onDelete: SetNull)
+
+  // Campo desnormalizado para preservar el nombre del servicio si la FK es nula
+  servicioNombre String?       @map("servicio_nombre") @db.VarChar(150)
+
+  // Índices
+  @@index([email], name: "idx_reservas_email")
+  @@index([estado], name: "idx_reservas_estado")
+  @@index([servicioId], name: "idx_reservas_servicio_id")
+  @@index([createdAt], name: "idx_reservas_created_at")
+  @@index([fechaEvento], name: "idx_reservas_fecha_evento")
+  @@index([estado, createdAt], name: "idx_reservas_estado_created_at")
+  @@map("reservas")
+}
