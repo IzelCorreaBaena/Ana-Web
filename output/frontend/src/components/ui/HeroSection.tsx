@@ -38,10 +38,13 @@ export default function HeroSection({
         {subtitle && <p className="hero__subtitle">{subtitle}</p>}
 
         <div className="hero__actions">
-          <Link to={ctaPrimary.href} className="btn-primary btn-lg">
-            {ctaPrimary.label}
-          </Link>
-          {ctaSecondary && (
+          {ctaPrimary && (
+            <Link to={ctaPrimary.href || '#'} className="btn-primary btn-lg">
+              {ctaPrimary.label || 'Continuar'}
+            </Link>
+          )}
+          
+          {ctaSecondary && ctaSecondary.href && (
             <Link
               to={ctaSecondary.href}
               className="btn-ghost btn-lg text-ivory-50 border border-ivory-50/40 hover:bg-ivory-50/10 hover:text-ivory-50"
