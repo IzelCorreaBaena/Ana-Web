@@ -201,11 +201,11 @@ export default function AdminServices() {
                 {s.imagen && !imgError[s.id] ? (
                   <div className="w-24 aspect-[4/3] flex-shrink-0 overflow-hidden rounded-sm bg-ivory-100">
                     <img
-                      src={s.imagen}
+                      src={s.imagen.startsWith('http') ? s.imagen : `http://localhost:4000${s.imagen}`}
                       className="w-full h-full object-cover rounded-sm"
                       alt={s.titulo}
                       onError={() => setImgError((prev) => ({ ...prev, [s.id]: true }))}
-                    />
+                      />
                   </div>
                 ) : s.imagen ? (
                   <div className="w-24 aspect-[4/3] flex-shrink-0 rounded-sm bg-ivory-100 flex items-center justify-center text-charcoal-300 text-xs font-sans">
@@ -337,7 +337,7 @@ export default function AdminServices() {
                 <p className="text-xs uppercase tracking-wider text-charcoal-400 font-sans mb-1">Vista previa</p>
                 <div className="w-32 aspect-[4/3] overflow-hidden rounded-sm bg-ivory-100 border border-ivory-200">
                   <img
-                    src={formS.imagen}
+                    src={formS.imagen.startsWith('http') ? formS.imagen : `http://localhost:4000${formS.imagen}`}
                     alt="Vista previa"
                     className="w-full h-full object-cover"
                     onError={(e) => {

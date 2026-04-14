@@ -99,18 +99,25 @@ export default function Services() {
                 <div key={servicio.id} className={`grid lg:grid-cols-2 gap-12 items-start ${idx % 2 === 1 ? 'lg:[&>*:first-child]:order-2' : ''}`}>
                   {/* Imagen/visual */}
                   <div className="aspect-[4/3] bg-gradient-to-br from-sage-50 to-ivory-100 rounded-sm flex items-center justify-center overflow-hidden relative">
+                    
+                    {/* Si HAY imagen, muestra la foto */}
                     {servicio.imagen && (
                       <img
-                        src={servicio.imagen}
+                        src={servicio.imagen?.startsWith('http') ? servicio.imagen : `http://localhost:4000${servicio.imagen}`}
                         alt={servicio.titulo}
-                        className="absolute inset-0 w-full h-full object-cover"
+                        className="absolute inset-0 w-full h-full object-cover z-10"
                         onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                       />
                     )}
-                    <svg className="w-16 h-16 text-sage-200 relative z-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
-                        d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909" />
-                    </svg>
+
+                    {/* Si NO hay imagen, muestra la montañita */}
+                    {!servicio.imagen && (
+                      <svg className="w-16 h-16 text-sage-200 relative z-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
+                          d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909" />
+                      </svg>
+                    )}
+                    
                   </div>
 
                   {/* Contenido */}
