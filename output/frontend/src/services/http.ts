@@ -19,8 +19,12 @@ http.interceptors.response.use(
   (res) => res,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('auth_token');
-      window.location.href = '/admin/login';
+      const token = localStorage.getItem('auth_token');
+      const url: string = error.config?.url ?? '';
+      if (token && (url.includes('/admin') || url.includes('/auth'))) {
+        localStorage.removeItem('auth_token');
+        window.location.href = '/admin/login';
+      }
     }
     return Promise.reject(error);
   },

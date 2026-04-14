@@ -32,23 +32,41 @@ const reservaSchema = z.object({
 const updateSchema = z.object({
   estado: z.nativeEnum(EstadoReserva).optional(),
   notas: z.string().max(2000).optional(),
-  fechaEvento: z.string().datetime().optional(),
-  googleEventId: z.string().max(255).optional(),
+  fechaEvento: z
+    .string()
+    .datetime()
+    .refine((v) => new Date(v).getTime() > Date.now(), {
+      message: 'La fecha del evento debe estar en el futuro',
+    })
+    .optional(),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
-const listQuerySchema = z.object({ estado: z.nativeEnum(EstadoReserva).optional() });
+const listQuerySchema = z.object({
+  estado: z.nativeEnum(EstadoReserva).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+});
 
 export const reservationsController = {
   list: (async (req, res, next) => {
     try {
-      const { estado } = listQuerySchema.parse(req.query);
-      const reservas = await prisma.reserva.findMany({
-        where: estado ? { estado } : undefined,
-        include: { servicio: true },
-        orderBy: { createdAt: 'desc' },
-      });
-      res.json(reservas);
+      const { estado, page, limit } = listQuerySchema.parse(req.query);
+      const where = estado ? { estado } : undefined;
+      const skip = (page - 1) * limit;
+
+      const [reservas, total] = await Promise.all([
+        prisma.reserva.findMany({
+          where,
+          include: { servicio: true },
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit,
+        }),
+        prisma.reserva.count({ where }),
+      ]);
+
+      res.json({ data: reservas, pagination: { page, limit, total } });
     } catch (e) { next(e); }
   }) as RequestHandler,
 
@@ -97,6 +115,11 @@ export const reservationsController = {
     try {
       const { id } = idParamSchema.parse(req.params);
       const data = updateSchema.parse(req.body);
+
+      // Load current state to detect transitions (prevents duplicate side-effects)
+      const current = await prisma.reserva.findUnique({ where: { id } });
+      if (!current) throw new AppError('Reserva no encontrada', 404);
+
       const reserva = await prisma.reserva.update({
         where: { id },
         data: {
@@ -106,26 +129,31 @@ export const reservationsController = {
         include: { servicio: true },
       });
 
-      // Fire-and-forget side effects on estado transitions
-      if (data.estado === EstadoReserva.ACEPTADA) {
+      // Fire-and-forget side effects only on actual state transitions
+      const isTransitionTo = (estado: EstadoReserva) =>
+        data.estado === estado && current.estado !== estado;
+
+      if (isTransitionTo(EstadoReserva.ACEPTADA)) {
         emailService.sendAcceptedEmail(reserva).catch((err) => {
           console.error('[email] failed to send accepted notification', err);
         });
 
-        // Attempt Google Calendar event creation and persist the event ID if successful
-        calendarService.createEvent(reserva).then(async (eventId) => {
-          if (eventId) {
-            await prisma.reserva.update({
-              where: { id: reserva.id },
-              data: { googleEventId: eventId },
-            }).catch((err) => {
-              console.error('[calendar] failed to persist googleEventId', err);
-            });
-          }
-        }).catch((err) => {
-          console.error('[calendar] createEvent threw unexpectedly', err);
-        });
-      } else if (data.estado === EstadoReserva.RECHAZADA) {
+        // Only create calendar event if none exists yet
+        if (!current.googleEventId) {
+          calendarService.createEvent(reserva).then(async (eventId) => {
+            if (eventId) {
+              await prisma.reserva.update({
+                where: { id: reserva.id },
+                data: { googleEventId: eventId },
+              }).catch((err) => {
+                console.error('[calendar] failed to persist googleEventId', err);
+              });
+            }
+          }).catch((err) => {
+            console.error('[calendar] createEvent threw unexpectedly', err);
+          });
+        }
+      } else if (isTransitionTo(EstadoReserva.RECHAZADA)) {
         emailService.sendRejectedEmail(reserva, data.notas).catch((err) => {
           console.error('[email] failed to send rejected notification', err);
         });
@@ -138,6 +166,15 @@ export const reservationsController = {
   remove: (async (req, res, next) => {
     try {
       const { id } = idParamSchema.parse(req.params);
+      const reserva = await prisma.reserva.findUnique({ where: { id } });
+      if (!reserva) throw new AppError('Reserva no encontrada', 404);
+
+      if (reserva.googleEventId) {
+        calendarService.deleteEvent(reserva.googleEventId).catch((err) => {
+          console.error('[calendar] failed to delete event on reservation remove', err);
+        });
+      }
+
       await prisma.reserva.delete({ where: { id } });
       res.status(204).send();
     } catch (e) { next(e); }

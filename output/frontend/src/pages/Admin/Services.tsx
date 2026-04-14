@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { servicesApi } from '@services/services.api';
+import { blocksApi } from '@services/blocks.api';
 import type { Servicio } from '@types/models';
 import Modal from '../../components/ui/Modal';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
@@ -16,7 +17,7 @@ export default function AdminServices() {
   const [saving, setSaving] = useState(false);
 
   // Form servicio
-  const [formS, setFormS] = useState({ titulo: '', descripcion: '' });
+  const [formS, setFormS] = useState({ titulo: '', descripcion: '', imagen: '' });
   // Form bloque
   const [formB, setFormB] = useState({ titulo: '', descripcion: '', orden: 1 });
 
@@ -31,13 +32,13 @@ export default function AdminServices() {
   useEffect(() => { fetchServices(); }, []);
 
   const openCreate = () => {
-    setFormS({ titulo: '', descripcion: '' });
+    setFormS({ titulo: '', descripcion: '', imagen: '' });
     setSelected(null);
     setModal('createService');
   };
 
   const openEdit = (s: Servicio) => {
-    setFormS({ titulo: s.titulo, descripcion: s.descripcion });
+    setFormS({ titulo: s.titulo, descripcion: s.descripcion, imagen: s.imagen ?? '' });
     setSelected(s);
     setModal('editService');
   };
@@ -53,10 +54,10 @@ export default function AdminServices() {
     setSaving(true);
     try {
       if (modal === 'createService') {
-        await servicesApi.create({ titulo: formS.titulo, descripcion: formS.descripcion });
+        await servicesApi.create({ titulo: formS.titulo, descripcion: formS.descripcion, imagen: formS.imagen.trim() || null });
         success('Servicio creado correctamente');
       } else if (selected) {
-        await servicesApi.update(selected.id, { titulo: formS.titulo, descripcion: formS.descripcion });
+        await servicesApi.update(selected.id, { titulo: formS.titulo, descripcion: formS.descripcion, imagen: formS.imagen.trim() || null });
         success('Servicio actualizado');
       }
       setModal(null);
@@ -69,7 +70,7 @@ export default function AdminServices() {
   };
 
   const deleteService = async (id: string) => {
-    if (!confirm('¿Eliminar este servicio? Esta acción no se puede deshacer.')) return;
+    if (!window.confirm('¿Eliminar este servicio? Esta acción no se puede deshacer.')) return;
     try {
       await servicesApi.remove(id);
       success('Servicio eliminado');
@@ -103,6 +104,11 @@ export default function AdminServices() {
           {services.map((s) => (
             <div key={s.id} className="bg-white rounded-sm border border-ivory-200 p-6">
               <div className="flex items-start justify-between gap-4">
+                {s.imagen && (
+                  <div className="w-24 aspect-[4/3] flex-shrink-0 overflow-hidden rounded-sm bg-ivory-100">
+                    <img src={s.imagen} className="w-full h-full object-cover rounded-sm" alt={s.titulo} />
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-1">
                     <h3 className="font-serif text-xl text-charcoal-800">{s.titulo}</h3>
@@ -156,6 +162,7 @@ export default function AdminServices() {
         isOpen={modal === 'createService' || modal === 'editService'}
         onClose={() => setModal(null)}
         title={modal === 'createService' ? 'Nuevo servicio' : 'Editar servicio'}
+        dismissOnBackdrop={false}
       >
         <div className="space-y-4">
           <div>
@@ -177,6 +184,15 @@ export default function AdminServices() {
               placeholder="Descripción del servicio..."
             />
           </div>
+          <div>
+            <label className="form-label">URL imagen (opcional)</label>
+            <input
+              className="input-field"
+              value={formS.imagen}
+              onChange={(e) => setFormS({ ...formS, imagen: e.target.value })}
+              placeholder="https://..."
+            />
+          </div>
           <div className="flex gap-3 pt-2">
             <button onClick={saveService} disabled={saving || !formS.titulo.trim()} className="btn-primary flex-1">
               {saving ? 'Guardando...' : 'Guardar'}
@@ -191,6 +207,7 @@ export default function AdminServices() {
         isOpen={modal === 'manageBlocks'}
         onClose={() => setModal(null)}
         title={`Bloques de "${selected?.titulo ?? ''}"`}
+        dismissOnBackdrop={false}
       >
         {selected && (
           <div className="space-y-6">
@@ -205,6 +222,25 @@ export default function AdminServices() {
                       <span className="font-medium text-charcoal-700">{b.titulo}</span>
                       {b.descripcion && <span className="text-charcoal-400 ml-2">— {b.descripcion}</span>}
                     </div>
+                    <button
+                      onClick={async () => {
+                        const currentSelected = selected;
+                        if (!currentSelected) return;
+                        if (!window.confirm(`¿Eliminar bloque "${b.titulo}"?`)) return;
+                        try {
+                          await blocksApi.remove(b.id);
+                          success('Bloque eliminado');
+                          const updated = await servicesApi.get(currentSelected.id);
+                          setSelected(updated);
+                          fetchServices();
+                        } catch {
+                          toastError('Error al eliminar el bloque');
+                        }
+                      }}
+                      className="text-xs text-red-400 hover:text-red-600 transition-colors font-sans"
+                    >
+                      ✕
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -226,11 +262,28 @@ export default function AdminServices() {
                 onChange={(e) => setFormB({ ...formB, descripcion: e.target.value })}
               />
               <button
-                disabled={!formB.titulo.trim()}
+                disabled={saving || !formB.titulo.trim()}
                 className="btn-primary w-full text-sm"
-                onClick={() => {
-                  // TODO: llamar a blocksApi.create cuando esté implementado en el api service
-                  toastError('API de bloques pendiente de integración');
+                onClick={async () => {
+                  if (!formB.titulo.trim() || !selected) return;
+                  const currentSelected = selected;
+                  setSaving(true);
+                  try {
+                    await blocksApi.create({
+                      titulo: formB.titulo.trim(),
+                      descripcion: formB.descripcion.trim(),
+                      servicioId: currentSelected.id,
+                    });
+                    success('Bloque añadido');
+                    setFormB({ titulo: '', descripcion: '', orden: currentSelected.bloques.length + 2 });
+                    fetchServices();
+                    const updated = await servicesApi.get(currentSelected.id);
+                    setSelected(updated);
+                  } catch {
+                    toastError('Error al añadir el bloque');
+                  } finally {
+                    setSaving(false);
+                  }
                 }}
               >
                 Añadir bloque

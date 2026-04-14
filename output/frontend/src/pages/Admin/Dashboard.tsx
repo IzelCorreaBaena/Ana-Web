@@ -16,20 +16,25 @@ export default function AdminDashboard() {
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [stats, setStats] = useState<Stats>({ total: 0, pendientes: 0, aceptadas: 0, rechazadas: 0 });
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     reservationsApi.list()
-      .then((data) => {
-        const all = data;
+      .then((res) => {
+        const all = res.data;
         setReservas(all);
         setStats({
-          total: all.length,
+          total: res.pagination.total,
           pendientes: all.filter((r) => r.estado === 'PENDIENTE').length,
           aceptadas: all.filter((r) => r.estado === 'ACEPTADA').length,
           rechazadas: all.filter((r) => r.estado === 'RECHAZADA').length,
         });
+        setFetchError(null);
       })
-      .catch(() => { /* silencioso */ })
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : 'Error desconocido';
+        setFetchError(`No pudimos cargar las reservas: ${msg}`);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -46,6 +51,15 @@ export default function AdminDashboard() {
         <h1 className="font-serif text-3xl text-charcoal-800">Resumen</h1>
         <p className="text-charcoal-500 mt-1 font-sans text-sm">Bienvenida al panel de administración de Ana Castellano Florista.</p>
       </div>
+
+      {fetchError && (
+        <p
+          role="alert"
+          className="text-sm text-red-700 bg-red-50 border border-red-200 rounded px-4 py-3"
+        >
+          {fetchError}
+        </p>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

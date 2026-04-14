@@ -1,75 +1,90 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import HeroSection from '../components/ui/HeroSection';
 import SectionHeader from '../components/ui/SectionHeader';
-import ServiceCard from '../components/ui/ServiceCard';
+import ServiceCard, { type ServiceCardData } from '../components/ui/ServiceCard';
 import ReviewCard from '../components/ui/ReviewCard';
-
-interface PreviewService {
-  id: string;
-  name: string;
-  description: string;
-  imageUrl?: string;
-}
+import { servicesApi } from '@services/services.api';
 
 interface PreviewReview {
   id: string;
-  author: string;
-  role: string;
-  text: string;
+  nombre: string;
+  evento: string;
+  texto: string;
 }
 
-const featuredServices: readonly PreviewService[] = [
+const fallbackServices: readonly ServiceCardData[] = [
   {
-    id: 'bodas',
-    name: 'Bodas',
-    description: 'Diseño floral integral para el día más importante: ramos de novia, ceremonia y banquete.',
+    id: '',
+    titulo: 'Bodas',
+    descripcion: 'Diseño floral integral para el día más importante: ramos de novia, ceremonia y banquete.',
   },
   {
-    id: 'eventos',
-    name: 'Eventos privados',
-    description: 'Ambientación floral para celebraciones íntimas, cumpleaños y aniversarios memorables.',
+    id: '',
+    titulo: 'Eventos privados',
+    descripcion: 'Ambientación floral para celebraciones íntimas, cumpleaños y aniversarios memorables.',
   },
   {
-    id: 'corporativo',
-    name: 'Eventos corporativos',
-    description: 'Decoración floral profesional para presentaciones, galas e inauguraciones.',
-  },
-  {
-    id: 'espacios',
-    name: 'Espacios y comercios',
-    description: 'Composiciones recurrentes para hoteles, restaurantes y boutiques de marca.',
+    id: '',
+    titulo: 'Eventos corporativos',
+    descripcion: 'Decoración floral profesional para presentaciones, galas e inauguraciones.',
   },
 ];
 
 const testimonials: readonly PreviewReview[] = [
   {
     id: 't1',
-    author: 'Lucía & Mario',
-    role: 'Boda en Finca El Mirador',
-    text: 'Ana entendió nuestra visión desde el primer encuentro. Cada arreglo era una pequeña obra de arte, y los invitados aún hablan del ramo de novia.',
+    nombre: 'Lucía & Mario',
+    evento: 'Boda en Finca El Mirador',
+    texto: 'Ana entendió nuestra visión desde el primer encuentro. Cada arreglo era una pequeña obra de arte, y los invitados aún hablan del ramo de novia.',
   },
   {
     id: 't2',
-    author: 'Carolina Méndez',
-    role: 'Aniversario familiar',
-    text: 'Trabajar con Ana es trabajar con una verdadera artista. Cuidó cada detalle y consiguió un ambiente cálido, sofisticado y muy personal.',
+    nombre: 'Carolina Méndez',
+    evento: 'Aniversario familiar',
+    texto: 'Trabajar con Ana es trabajar con una verdadera artista. Cuidó cada detalle y consiguió un ambiente cálido, sofisticado y muy personal.',
   },
   {
     id: 't3',
-    author: 'Hotel Casa Botánica',
-    role: 'Decoración semanal',
-    text: 'Llevamos más de dos años confiando en Ana para las flores del lobby. Su sensibilidad estética y su compromiso son excepcionales.',
+    nombre: 'Hotel Casa Botánica',
+    evento: 'Decoración semanal',
+    texto: 'Llevamos más de dos años confiando en Ana para las flores del lobby. Su sensibilidad estética y su compromiso son excepcionales.',
   },
 ];
 
 export default function Home(): JSX.Element {
+  const [featuredServices, setFeaturedServices] = useState<readonly ServiceCardData[]>(fallbackServices);
+
+  useEffect(() => {
+    let active = true;
+    servicesApi
+      .list()
+      .then((data) => {
+        if (!active || data.length === 0) return;
+        setFeaturedServices(
+          data.slice(0, 3).map((s) => ({
+            id: s.id,
+            titulo: s.titulo,
+            descripcion: s.descripcion,
+            bloques: s.bloques,
+          })),
+        );
+      })
+      .catch(() => {
+        /* keep fallback */
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
     <>
       <HeroSection
         title="Flores que cuentan tu historia"
         subtitle="Diseño floral artístico para bodas, eventos y espacios únicos"
-        primaryCta={{ label: 'Reserva tu cita', to: '/reservations' }}
-        secondaryCta={{ label: 'Ver servicios', to: '/services' }}
+        ctaPrimary={{ label: 'Reserva tu cita', href: '/reservations' }}
+        ctaSecondary={{ label: 'Ver servicios', href: '/services' }}
       />
 
       {/* Quién soy */}
@@ -101,16 +116,13 @@ export default function Home(): JSX.Element {
           <SectionHeader
             eyebrow="Mis Servicios"
             title="Arte floral para cada momento"
-            align="center"
+            centered
           />
           <div className="grid gap-6 sm:grid-cols-2 mt-12">
-            {featuredServices.map((service) => (
+            {featuredServices.map((service, idx) => (
               <ServiceCard
-                key={service.id}
-                id={service.id}
-                name={service.name}
-                description={service.description}
-                imageUrl={service.imageUrl}
+                key={service.id || `fallback-${idx}`}
+                servicio={service}
               />
             ))}
           </div>
@@ -128,15 +140,15 @@ export default function Home(): JSX.Element {
           <SectionHeader
             eyebrow="Testimonios"
             title="Lo que dicen quienes ya confiaron en mí"
-            align="center"
+            centered
           />
           <div className="grid gap-6 md:grid-cols-3 mt-12">
             {testimonials.map((review) => (
               <ReviewCard
                 key={review.id}
-                author={review.author}
-                role={review.role}
-                text={review.text}
+                nombre={review.nombre}
+                texto={review.texto}
+                evento={review.evento}
               />
             ))}
           </div>

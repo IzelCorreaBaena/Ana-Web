@@ -98,8 +98,16 @@ export default function Services() {
               {services.map((servicio, idx) => (
                 <div key={servicio.id} className={`grid lg:grid-cols-2 gap-12 items-start ${idx % 2 === 1 ? 'lg:[&>*:first-child]:order-2' : ''}`}>
                   {/* Imagen/visual */}
-                  <div className="aspect-[4/3] bg-gradient-to-br from-sage-50 to-ivory-100 rounded-sm flex items-center justify-center">
-                    <svg className="w-16 h-16 text-sage-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="aspect-[4/3] bg-gradient-to-br from-sage-50 to-ivory-100 rounded-sm flex items-center justify-center overflow-hidden relative">
+                    {servicio.imagen && (
+                      <img
+                        src={servicio.imagen}
+                        alt={servicio.titulo}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    )}
+                    <svg className="w-16 h-16 text-sage-200 relative z-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
                         d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909" />
                     </svg>
@@ -109,7 +117,7 @@ export default function Services() {
                   <div className="space-y-6">
                     <div>
                       <span className="text-gold-500 font-sans text-sm uppercase tracking-widest">
-                        0{servicio.orden}
+                        {String(servicio.orden).padStart(2, '0')}
                       </span>
                       <h2 className="font-serif text-3xl text-charcoal-800 mt-1">{servicio.titulo}</h2>
                       <div className="divider-gold mt-3" />

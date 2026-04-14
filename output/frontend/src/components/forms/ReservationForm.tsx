@@ -43,8 +43,12 @@ function validate(state: FormState): FieldErrors {
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email)) {
     errors.email = 'Introduce un email válido.';
   }
-  if (state.telefono && !/^[0-9+\s()-]{6,}$/.test(state.telefono)) {
-    errors.telefono = 'Teléfono no válido.';
+  if (state.telefono) {
+    if (state.telefono.length > 25) {
+      errors.telefono = 'Teléfono demasiado largo (máx. 25 caracteres).';
+    } else if (!/^[+]?[\d\s\-.()]{6,25}$/.test(state.telefono)) {
+      errors.telefono = 'Teléfono no válido.';
+    }
   }
   if (!state.servicioId) errors.servicioId = 'Selecciona un servicio.';
   if (!state.mensaje.trim()) errors.mensaje = 'Cuéntanos un poco sobre tu evento.';
@@ -101,7 +105,7 @@ export default function ReservationForm({
         telefono: state.telefono,
         servicioId: state.servicioId || undefined,
         mensaje: state.mensaje,
-        fechaEvento: state.fechaEvento || undefined,
+        fechaEvento: state.fechaEvento ? new Date(state.fechaEvento).toISOString() : undefined,
       });
       setSuccess(true);
       toast.success('Reserva enviada. Te contactaremos pronto.');
@@ -170,6 +174,7 @@ export default function ReservationForm({
             id="telefono"
             type="tel"
             autoComplete="tel"
+            maxLength={25}
             className={`input-field ${errors.telefono ? 'input-error' : ''}`}
             value={state.telefono}
             onChange={(e) => update('telefono', e.target.value)}
@@ -205,6 +210,7 @@ export default function ReservationForm({
           <input
             id="fechaEvento"
             type="date"
+            min={new Date().toLocaleDateString('en-CA')}
             className="input-field"
             value={state.fechaEvento}
             onChange={(e) => update('fechaEvento', e.target.value)}

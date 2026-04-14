@@ -6,8 +6,8 @@ export { EstadoReserva } from '@prisma/client';
 
 export interface AuthTokenPayload {
   sub: string;
-  username: string;
-  email: string;
+  username?: string;
+  email?: string;
   iat?: number;
   exp?: number;
 }

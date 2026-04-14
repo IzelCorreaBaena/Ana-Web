@@ -62,6 +62,7 @@ function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): {
 // ─── Global error handler middleware ─────────────────────────────────────────
 
 export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
+  if (res.headersSent) return _next(err);
   const isProd = env.NODE_ENV === 'production';
 
   // Zod validation error — return 400 with per-field messages

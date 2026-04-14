@@ -16,6 +16,7 @@ export interface Servicio {
   readonly id: string;
   readonly titulo: string;
   readonly descripcion: string;
+  readonly imagen?: string | null;
   readonly orden: number;
   readonly activo: boolean;
   readonly bloques: Bloque[];
@@ -55,11 +56,13 @@ export interface Admin {
 export interface CreateServicioPayload {
   titulo: string;
   descripcion: string;
+  imagen?: string | null;
 }
 
 export interface UpdateServicioPayload {
   titulo?: string;
   descripcion?: string;
+  imagen?: string | null;
   orden?: number;
   activo?: boolean;
 }
@@ -92,6 +95,21 @@ export interface UpdateBloquePayload {
   imagenes?: string[];
   orden?: number;
   activo?: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Pagination wrapper — matches the backend envelope for paginated list endpoints.
+// ---------------------------------------------------------------------------
+
+export interface PaginationMeta {
+  readonly page: number;
+  readonly limit: number;
+  readonly total: number;
+}
+
+export interface PaginatedResponse<T> {
+  readonly data: T[];
+  readonly pagination: PaginationMeta;
 }
 
 // ---------------------------------------------------------------------------

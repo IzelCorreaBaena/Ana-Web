@@ -1,12 +1,9 @@
 import { useState, type FormEvent } from 'react';
-import { http } from '@services/http';
-import { toast } from '@hooks/useToast';
-import LoadingSpinner from '@components/ui/LoadingSpinner';
 
 interface ContactFormProps {
   onSuccess?: () => void;
-  /** Si se proporciona, fallback a mailto cuando falla el endpoint */
-  fallbackEmail?: string;
+  /** Destinatario del mailto. Por defecto: hola@anacastellano.com */
+  mailtoAddress?: string;
 }
 
 interface FormState {
@@ -18,6 +15,7 @@ interface FormState {
 type FieldErrors = Partial<Record<keyof FormState, string>>;
 
 const INITIAL: FormState = { nombre: '', email: '', mensaje: '' };
+const DEFAULT_MAILTO = 'hola@anacastellano.com';
 
 function validate(state: FormState): FieldErrors {
   const errors: FieldErrors = {};
@@ -33,68 +31,48 @@ function validate(state: FormState): FieldErrors {
 
 export default function ContactForm({
   onSuccess,
-  fallbackEmail,
+  mailtoAddress = DEFAULT_MAILTO,
 }: ContactFormProps) {
   const [state, setState] = useState<FormState>(INITIAL);
   const [errors, setErrors] = useState<FieldErrors>({});
-  const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [opened, setOpened] = useState(false);
 
   const update = <K extends keyof FormState>(field: K, value: FormState[K]) => {
     setState((s) => ({ ...s, [field]: value }));
     if (errors[field]) setErrors((e) => ({ ...e, [field]: undefined }));
   };
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const v = validate(state);
     setErrors(v);
     if (Object.keys(v).length > 0) return;
 
-    setSubmitting(true);
-    try {
-      await http.post('/contacto', {
-        name: state.nombre,
-        email: state.email,
-        message: state.mensaje,
-      });
-      setSuccess(true);
-      toast.success('Mensaje enviado. ¡Gracias por escribirnos!');
-      setState(INITIAL);
-      onSuccess?.();
-    } catch {
-      if (fallbackEmail) {
-        const subject = encodeURIComponent(`Contacto desde la web — ${state.nombre}`);
-        const body = encodeURIComponent(state.mensaje);
-        window.location.href = `mailto:${fallbackEmail}?subject=${subject}&body=${body}`;
-      } else {
-        toast.error('No pudimos enviar tu mensaje. Inténtalo más tarde.');
-      }
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  if (success) {
-    return (
-      <div className="text-center py-10 px-6 bg-ivory-100 border border-ivory-300 rounded-lg animate-fade-in">
-        <h3 className="font-serif text-2xl text-charcoal-900 mb-2">
-          Mensaje recibido
-        </h3>
-        <p className="text-charcoal-700">Te responderemos lo antes posible.</p>
-        <button
-          type="button"
-          className="btn-secondary btn-sm mt-5"
-          onClick={() => setSuccess(false)}
-        >
-          Enviar otro mensaje
-        </button>
-      </div>
+    const subject = encodeURIComponent(`Contacto desde la web — ${state.nombre}`);
+    const body = encodeURIComponent(
+      `Nombre: ${state.nombre}\nEmail: ${state.email}\n\n${state.mensaje}`
     );
-  }
+    const mailtoUrl = `mailto:${mailtoAddress}?subject=${subject}&body=${body}`;
+
+    setOpened(true);
+    window.location.href = mailtoUrl;
+    onSuccess?.();
+  };
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-5">
+      <p className="text-sm text-charcoal-500 bg-ivory-50 border border-ivory-200 rounded px-4 py-3">
+        Al enviar, se abrirá tu cliente de correo con el mensaje listo para enviar a{' '}
+        <strong>{mailtoAddress}</strong>.
+      </p>
+
+      {opened && (
+        <p className="text-sm text-sage-700 bg-sage-50 border border-sage-200 rounded px-4 py-3">
+          Hemos abierto tu cliente de correo. Si no ha aparecido, escríbenos
+          directamente a {mailtoAddress}.
+        </p>
+      )}
+
       <div className="form-group">
         <label htmlFor="contact-nombre" className="form-label">Nombre *</label>
         <input
@@ -135,11 +113,9 @@ export default function ContactForm({
 
       <button
         type="submit"
-        disabled={submitting}
         className="btn-primary btn-lg btn-full inline-flex items-center justify-center gap-3"
       >
-        {submitting && <LoadingSpinner size="sm" className="border-white/40 border-t-white" />}
-        {submitting ? 'Enviando…' : 'Enviar mensaje'}
+        Abrir en mi cliente de correo
       </button>
     </form>
   );

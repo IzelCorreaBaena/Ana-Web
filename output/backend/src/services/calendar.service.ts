@@ -93,7 +93,6 @@ export const calendarService = {
                 timeZone: 'Europe/Madrid',
               }
             : { date: startDate },
-          attendees: [{ email: reserva.email, displayName: reserva.nombre }],
           reminders: {
             useDefault: false,
             overrides: [
@@ -112,6 +111,18 @@ export const calendarService = {
     } catch (err) {
       console.error('[calendar] failed to create event', err);
       return null;
+    }
+  },
+
+  async deleteEvent(eventId: string): Promise<void> {
+    const calendar = await getCalendarClient();
+    if (!calendar) return;
+    const calendarId = env.GOOGLE_CALENDAR_ID as string;
+    try {
+      await calendar.events.delete({ calendarId, eventId });
+      console.log(`[calendar] event deleted: ${eventId}`);
+    } catch (err) {
+      console.error('[calendar] failed to delete event', err);
     }
   },
 };

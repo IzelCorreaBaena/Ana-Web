@@ -5,7 +5,8 @@ import { AppError } from '../middleware/errorHandler';
 
 const servicioSchema = z.object({
   titulo: z.string().trim().min(1).max(150),
-  descripcion: z.string().trim().min(1).max(5000),
+  descripcion: z.string().trim().max(5000).optional().default(''),
+  imagen: z.string().url().max(500).refine(v => v.startsWith('https://'), 'Solo URLs https permitidas').optional().nullable(),
   orden: z.number().int().min(0).max(10_000).optional(),
   activo: z.boolean().optional(),
 });
@@ -39,7 +40,7 @@ export const servicesController = {
   create: (async (req, res, next) => {
     try {
       const data = servicioSchema.parse(req.body);
-      const servicio = await prisma.servicio.create({ data });
+      const servicio = await prisma.servicio.create({ data, include: { bloques: true } });
       res.status(201).json(servicio);
     } catch (e) { next(e); }
   }) as RequestHandler,

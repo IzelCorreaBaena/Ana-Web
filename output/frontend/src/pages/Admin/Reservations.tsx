@@ -19,7 +19,7 @@ export default function AdminReservations() {
   const fetchReservas = () => {
     setLoading(true);
     reservationsApi.list()
-      .then((data) => setReservas(data))
+      .then((res) => setReservas(res.data))
       .catch(() => toastError('Error al cargar reservas'))
       .finally(() => setLoading(false));
   };
@@ -154,7 +154,7 @@ export default function AdminReservations() {
       </div>
 
       {/* Modal detalle */}
-      <Modal isOpen={!!selected} onClose={() => setSelected(null)} title="Detalle de reserva">
+      <Modal isOpen={!!selected} onClose={() => setSelected(null)} title="Detalle de reserva" dismissOnBackdrop={false}>
         {selected && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4 text-sm">
@@ -195,14 +195,14 @@ export default function AdminReservations() {
               <div className="flex gap-3 pt-4 border-t border-ivory-100">
                 <button
                   onClick={() => cambiarEstado(selected.id, 'ACEPTADA')}
-                  disabled={!!actionLoading}
+                  disabled={actionLoading === selected.id + 'ACEPTADA'}
                   className="btn-primary flex-1 text-sm"
                 >
-                  {actionLoading ? 'Enviando...' : 'Aceptar reserva'}
+                  {actionLoading === selected.id + 'ACEPTADA' ? 'Enviando...' : 'Aceptar reserva'}
                 </button>
                 <button
                   onClick={() => cambiarEstado(selected.id, 'RECHAZADA')}
-                  disabled={!!actionLoading}
+                  disabled={actionLoading === selected.id + 'RECHAZADA'}
                   className="flex-1 text-sm px-4 py-2 rounded border border-red-200 text-red-600 hover:bg-red-50 transition-colors font-sans"
                 >
                   Rechazar

@@ -4,11 +4,12 @@ import type {
   CreateReservaPayload,
   UpdateReservaPayload,
   EstadoReserva,
+  PaginatedResponse,
 } from '@types/models';
 
 export const reservationsApi = {
-  async list(): Promise<Reserva[]> {
-    const { data } = await http.get<Reserva[]>('/reservations');
+  async list(params?: { estado?: string; page?: number; limit?: number }): Promise<PaginatedResponse<Reserva>> {
+    const { data } = await http.get<PaginatedResponse<Reserva>>('/reservations', { params });
     return data;
   },
 

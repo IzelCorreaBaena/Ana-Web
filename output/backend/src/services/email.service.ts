@@ -1,6 +1,16 @@
 import nodemailer, { Transporter } from 'nodemailer';
 import { env } from '../config/env';
 
+// ─── HTML escape helper ───────────────────────────────────────────────────────
+function escHtml(s: string | null | undefined): string {
+  return (s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ─── Shared design tokens (inline styles for email client compatibility) ───────
 const COLOR = {
   ivory: '#FAF7F2',
@@ -106,11 +116,11 @@ export const emailService = {
       ? `<p style="margin:16px 0 0;"><strong>Servicio solicitado:</strong> ${reserva.servicioNombre}</p>`
       : '';
     const html = emailWrapper(`
-      <h2 style="margin:0 0 24px;font-size:22px;font-weight:normal;color:${COLOR.charcoal};letter-spacing:0.5px;">Hola, ${reserva.nombre}</h2>
+      <h2 style="margin:0 0 24px;font-size:22px;font-weight:normal;color:${COLOR.charcoal};letter-spacing:0.5px;">Hola, ${escHtml(reserva.nombre)}</h2>
       <p style="margin:0 0 16px;">Hemos recibido tu solicitud de reserva. Nos pondremos en contacto contigo a la mayor brevedad para confirmar los detalles.</p>
       <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;background-color:${COLOR.ivory};border-left:3px solid ${COLOR.gold};padding:20px 24px;">
         <tr><td>
-          <p style="margin:0;"><strong>Fecha del evento:</strong> ${fecha}</p>
+          <p style="margin:0;"><strong>Fecha del evento:</strong> ${escHtml(fecha)}</p>
           ${servicio}
         </td></tr>
       </table>
@@ -128,14 +138,14 @@ export const emailService = {
       ? `<p style="margin:8px 0 0;"><strong>Servicio:</strong> ${reserva.servicioNombre}</p>`
       : '';
     const html = emailWrapper(`
-      <h2 style="margin:0 0 8px;font-size:22px;font-weight:normal;color:${COLOR.charcoal};letter-spacing:0.5px;">¡Hola, ${reserva.nombre}!</h2>
+      <h2 style="margin:0 0 8px;font-size:22px;font-weight:normal;color:${COLOR.charcoal};letter-spacing:0.5px;">¡Hola, ${escHtml(reserva.nombre)}!</h2>
       <p style="margin:0 0 24px;font-size:16px;color:${COLOR.sage};font-style:italic;">Tenemos una noticia estupenda para ti.</p>
       <p style="margin:0 0 16px;">Me complace confirmar que tu reserva ha sido <strong style="color:${COLOR.sage};">aceptada</strong>. Será un placer acompañarte en este momento tan especial.</p>
       <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;background-color:${COLOR.ivory};border-left:3px solid ${COLOR.gold};">
         <tr>
           <td style="padding:20px 24px;">
             <p style="margin:0;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:${COLOR.gold};">Detalles de tu evento</p>
-            <p style="margin:12px 0 0;"><strong>Fecha:</strong> ${fecha}</p>
+            <p style="margin:12px 0 0;"><strong>Fecha:</strong> ${escHtml(fecha)}</p>
             ${servicio}
           </td>
         </tr>
@@ -157,13 +167,13 @@ export const emailService = {
     const motivoBlock = motivo
       ? `<table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;background-color:${COLOR.ivory};border-left:3px solid ${COLOR.lightGray};">
            <tr><td style="padding:16px 24px;">
-             <p style="margin:0;font-size:13px;color:#888;">${motivo}</p>
+             <p style="margin:0;font-size:13px;color:#888;">${escHtml(motivo)}</p>
            </td></tr>
          </table>`
       : '';
     const html = emailWrapper(`
-      <h2 style="margin:0 0 24px;font-size:22px;font-weight:normal;color:${COLOR.charcoal};letter-spacing:0.5px;">Hola, ${reserva.nombre}</h2>
-      <p style="margin:0 0 16px;">Gracias por tu interés y por considerar a Ana Castellano Florista para tu evento del <strong>${fecha}</strong>.</p>
+      <h2 style="margin:0 0 24px;font-size:22px;font-weight:normal;color:${COLOR.charcoal};letter-spacing:0.5px;">Hola, ${escHtml(reserva.nombre)}</h2>
+      <p style="margin:0 0 16px;">Gracias por tu interés y por considerar a Ana Castellano Florista para tu evento del <strong>${escHtml(fecha)}</strong>.</p>
       <p style="margin:0 0 16px;">Lamentablemente, en esta ocasión no me es posible atenderte en esa fecha. Te pido disculpas por los inconvenientes que esto pueda ocasionarte.</p>
       ${motivoBlock}
       <p style="margin:0 0 16px;">Si deseas encontrar una fecha alternativa o necesitas ayuda con otra propuesta, estaré encantada de explorar opciones contigo. No dudes en contactarme directamente:</p>

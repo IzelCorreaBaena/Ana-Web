@@ -3,9 +3,11 @@ import { z } from 'zod';
 import { prisma } from '../config/prisma';
 import { AppError } from '../middleware/errorHandler';
 
+const idParamSchema = z.object({ id: z.string().uuid() });
+
 const bloqueSchema = z.object({
-  titulo: z.string().min(1).max(150),
-  descripcion: z.string().min(1),
+  titulo: z.string().trim().min(1).max(150),
+  descripcion: z.string().trim().max(5000).optional().default(''),
   imagenes: z.array(z.string().url()).default([]),
   orden: z.number().int().optional(),
   activo: z.boolean().optional(),
@@ -15,7 +17,9 @@ const bloqueSchema = z.object({
 export const blocksController = {
   list: (async (req, res, next) => {
     try {
-      const servicioId = req.query.servicioId ? String(req.query.servicioId) : undefined;
+      const servicioId = req.query.servicioId
+        ? z.string().uuid().parse(req.query.servicioId)
+        : undefined;
       const bloques = await prisma.bloque.findMany({
         where: servicioId ? { servicioId } : undefined,
         orderBy: [{ servicioId: 'asc' }, { orden: 'asc' }],
@@ -26,7 +30,8 @@ export const blocksController = {
 
   get: (async (req, res, next) => {
     try {
-      const bloque = await prisma.bloque.findUnique({ where: { id: req.params.id } });
+      const { id } = idParamSchema.parse(req.params);
+      const bloque = await prisma.bloque.findUnique({ where: { id } });
       if (!bloque) throw new AppError('Bloque no encontrado', 404);
       res.json(bloque);
     } catch (e) { next(e); }
@@ -35,22 +40,30 @@ export const blocksController = {
   create: (async (req, res, next) => {
     try {
       const data = bloqueSchema.parse(req.body);
-      const bloque = await prisma.bloque.create({ data });
+      const bloque = await prisma.$transaction(async (tx) => {
+        if (data.orden === undefined) {
+          const count = await tx.bloque.count({ where: { servicioId: data.servicioId } });
+          data.orden = count + 1;
+        }
+        return tx.bloque.create({ data });
+      });
       res.status(201).json(bloque);
     } catch (e) { next(e); }
   }) as RequestHandler,
 
   update: (async (req, res, next) => {
     try {
+      const { id } = idParamSchema.parse(req.params);
       const data = bloqueSchema.partial().parse(req.body);
-      const bloque = await prisma.bloque.update({ where: { id: req.params.id }, data });
+      const bloque = await prisma.bloque.update({ where: { id }, data });
       res.json(bloque);
     } catch (e) { next(e); }
   }) as RequestHandler,
 
   remove: (async (req, res, next) => {
     try {
-      await prisma.bloque.delete({ where: { id: req.params.id } });
+      const { id } = idParamSchema.parse(req.params);
+      await prisma.bloque.delete({ where: { id } });
       res.status(204).send();
     } catch (e) { next(e); }
   }) as RequestHandler,
