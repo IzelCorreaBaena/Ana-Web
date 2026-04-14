@@ -11,6 +11,11 @@ export const servicesApi = {
     return data;
   },
 
+  async listAll(): Promise<Servicio[]> {
+    const { data } = await http.get<Servicio[]>('/services?all=true');
+    return data;
+  },
+
   async get(id: string): Promise<Servicio> {
     const { data } = await http.get<Servicio>(`/services/${id}`);
     return data;
@@ -28,5 +33,14 @@ export const servicesApi = {
 
   async remove(id: string): Promise<void> {
     await http.delete(`/services/${id}`);
+  },
+
+  async uploadImage(file: File): Promise<{ url: string }> {
+    const formData = new FormData();
+    formData.append('image', file);
+    const { data } = await http.post<{ url: string }>('/uploads/image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return data;
   },
 };

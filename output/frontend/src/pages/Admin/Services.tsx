@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { servicesApi } from '@services/services.api';
 import { blocksApi } from '@services/blocks.api';
 import type { Servicio } from '@types/models';
@@ -8,6 +8,22 @@ import { useToast } from '../../hooks/useToast';
 
 type ModalMode = 'createService' | 'editService' | 'manageBlocks' | null;
 
+interface ZodIssue {
+  path: (string | number)[];
+  message: string;
+}
+
+interface FieldErrors {
+  titulo?: string;
+  descripcion?: string;
+  imagen?: string;
+  orden?: string;
+  activo?: string;
+}
+
+const MAX_TITULO = 150;
+const MAX_DESCRIPCION = 5000;
+
 export default function AdminServices() {
   const { success, error: toastError } = useToast();
   const [services, setServices] = useState<Servicio[]>([]);
@@ -15,15 +31,25 @@ export default function AdminServices() {
   const [modal, setModal] = useState<ModalMode>(null);
   const [selected, setSelected] = useState<Servicio | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [imgError, setImgError] = useState<Record<string, boolean>>({});
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Form servicio
-  const [formS, setFormS] = useState({ titulo: '', descripcion: '', imagen: '' });
+  const [formS, setFormS] = useState({
+    titulo: '',
+    descripcion: '',
+    imagen: '',
+    activo: true,
+    orden: 1,
+  });
   // Form bloque
   const [formB, setFormB] = useState({ titulo: '', descripcion: '', orden: 1 });
 
   const fetchServices = () => {
     setLoading(true);
-    servicesApi.list()
+    servicesApi.listAll()
       .then((data) => setServices(data))
       .catch(() => toastError('Error al cargar servicios'))
       .finally(() => setLoading(false));
@@ -31,14 +57,26 @@ export default function AdminServices() {
 
   useEffect(() => { fetchServices(); }, []);
 
+  const resetForm = () => {
+    setFormS({ titulo: '', descripcion: '', imagen: '', activo: true, orden: 1 });
+    setFieldErrors({});
+  };
+
   const openCreate = () => {
-    setFormS({ titulo: '', descripcion: '', imagen: '' });
+    resetForm();
     setSelected(null);
     setModal('createService');
   };
 
   const openEdit = (s: Servicio) => {
-    setFormS({ titulo: s.titulo, descripcion: s.descripcion, imagen: s.imagen ?? '' });
+    setFormS({
+      titulo: s.titulo,
+      descripcion: s.descripcion,
+      imagen: s.imagen ?? '',
+      activo: s.activo,
+      orden: s.orden ?? 1,
+    });
+    setFieldErrors({});
     setSelected(s);
     setModal('editService');
   };
@@ -49,21 +87,72 @@ export default function AdminServices() {
     setModal('manageBlocks');
   };
 
+  const parseFieldErrors = (err: unknown): FieldErrors => {
+    const out: FieldErrors = {};
+    const response = (err as { response?: { data?: { issues?: ZodIssue[] } } })?.response;
+    const issues = response?.data?.issues;
+    if (Array.isArray(issues)) {
+      for (const issue of issues) {
+        const key = issue.path?.[0];
+        if (typeof key === 'string' && key in ({ titulo: 1, descripcion: 1, imagen: 1, orden: 1, activo: 1 } as Record<string, number>)) {
+          (out as Record<string, string>)[key] = issue.message;
+        }
+      }
+    }
+    return out;
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const { url } = await servicesApi.uploadImage(file);
+      setFormS((prev) => ({ ...prev, imagen: url }));
+      setFieldErrors((prev) => ({ ...prev, imagen: undefined }));
+      success('Imagen subida correctamente');
+    } catch {
+      toastError('Error al subir la imagen');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   const saveService = async () => {
     if (!formS.titulo.trim()) return;
     setSaving(true);
+    setFieldErrors({});
+    const payload = {
+      titulo: formS.titulo,
+      descripcion: formS.descripcion,
+      imagen: formS.imagen.trim() || null,
+      activo: formS.activo,
+      orden: formS.orden,
+    };
     try {
       if (modal === 'createService') {
-        await servicesApi.create({ titulo: formS.titulo, descripcion: formS.descripcion, imagen: formS.imagen.trim() || null });
+        await servicesApi.create(payload);
         success('Servicio creado correctamente');
       } else if (selected) {
-        await servicesApi.update(selected.id, { titulo: formS.titulo, descripcion: formS.descripcion, imagen: formS.imagen.trim() || null });
+        await servicesApi.update(selected.id, payload);
         success('Servicio actualizado');
       }
       setModal(null);
       fetchServices();
-    } catch {
-      toastError('Error al guardar el servicio');
+    } catch (err) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 400) {
+        const fErrs = parseFieldErrors(err);
+        if (Object.keys(fErrs).length > 0) {
+          setFieldErrors(fErrs);
+          toastError('Revisa los campos marcados');
+        } else {
+          toastError('Error al guardar el servicio');
+        }
+      } else {
+        toastError('Error al guardar el servicio');
+      }
     } finally {
       setSaving(false);
     }
@@ -78,6 +167,11 @@ export default function AdminServices() {
     } catch {
       toastError('No se puede eliminar. Puede tener reservas activas.');
     }
+  };
+
+  const isValidImageUrl = (url: string): boolean => {
+    const trimmed = url.trim();
+    return trimmed.length > 0 && /^https?:\/\//i.test(trimmed);
   };
 
   return (
@@ -104,11 +198,20 @@ export default function AdminServices() {
           {services.map((s) => (
             <div key={s.id} className="bg-white rounded-sm border border-ivory-200 p-6">
               <div className="flex items-start justify-between gap-4">
-                {s.imagen && (
+                {s.imagen && !imgError[s.id] ? (
                   <div className="w-24 aspect-[4/3] flex-shrink-0 overflow-hidden rounded-sm bg-ivory-100">
-                    <img src={s.imagen} className="w-full h-full object-cover rounded-sm" alt={s.titulo} />
+                    <img
+                      src={s.imagen}
+                      className="w-full h-full object-cover rounded-sm"
+                      alt={s.titulo}
+                      onError={() => setImgError((prev) => ({ ...prev, [s.id]: true }))}
+                    />
                   </div>
-                )}
+                ) : s.imagen ? (
+                  <div className="w-24 aspect-[4/3] flex-shrink-0 rounded-sm bg-ivory-100 flex items-center justify-center text-charcoal-300 text-xs font-sans">
+                    <span aria-label="Imagen no disponible" title="Imagen no disponible">🖼️✕</span>
+                  </div>
+                ) : null}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-1">
                     <h3 className="font-serif text-xl text-charcoal-800">{s.titulo}</h3>
@@ -170,9 +273,16 @@ export default function AdminServices() {
             <input
               className="input-field"
               value={formS.titulo}
+              maxLength={MAX_TITULO}
               onChange={(e) => setFormS({ ...formS, titulo: e.target.value })}
               placeholder="Ej: Diseño Floral Personalizado"
             />
+            <div className="flex justify-between mt-1">
+              {fieldErrors.titulo ? (
+                <span className="text-xs text-red-500 font-sans">{fieldErrors.titulo}</span>
+              ) : <span />}
+              <span className="text-xs text-charcoal-400 font-sans">{formS.titulo.length} / {MAX_TITULO}</span>
+            </div>
           </div>
           <div>
             <label className="form-label">Descripción</label>
@@ -180,19 +290,92 @@ export default function AdminServices() {
               className="input-field resize-none"
               rows={4}
               value={formS.descripcion}
+              maxLength={MAX_DESCRIPCION}
               onChange={(e) => setFormS({ ...formS, descripcion: e.target.value })}
               placeholder="Descripción del servicio..."
             />
+            <div className="flex justify-between mt-1">
+              {fieldErrors.descripcion ? (
+                <span className="text-xs text-red-500 font-sans">{fieldErrors.descripcion}</span>
+              ) : <span />}
+              <span className="text-xs text-charcoal-400 font-sans">{formS.descripcion.length} / {MAX_DESCRIPCION}</span>
+            </div>
           </div>
+
           <div>
-            <label className="form-label">URL imagen (opcional)</label>
+            <label className="form-label">Imagen (opcional)</label>
             <input
-              className="input-field"
-              value={formS.imagen}
-              onChange={(e) => setFormS({ ...formS, imagen: e.target.value })}
-              placeholder="https://..."
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleFileUpload}
+              disabled={uploading}
+              className="block w-full text-sm text-charcoal-600 font-sans file:mr-3 file:py-1.5 file:px-3 file:rounded file:border file:border-ivory-200 file:text-xs file:bg-ivory-50 file:text-charcoal-700 hover:file:bg-ivory-100"
             />
+            {uploading && (
+              <div className="flex items-center gap-2 mt-2 text-xs text-charcoal-500 font-sans">
+                <LoadingSpinner size="sm" /> Subiendo imagen...
+              </div>
+            )}
+            <div className="mt-3">
+              <label className="form-label text-xs">O introduce una URL</label>
+              <input
+                className="input-field"
+                value={formS.imagen}
+                onChange={(e) => setFormS({ ...formS, imagen: e.target.value })}
+                placeholder="https://..."
+              />
+              <p className="text-xs text-charcoal-400 mt-1 font-sans">
+                Solo URLs https válidas (máx. 500 caracteres)
+              </p>
+              {fieldErrors.imagen && (
+                <p className="text-xs text-red-500 mt-1 font-sans">{fieldErrors.imagen}</p>
+              )}
+            </div>
+            {isValidImageUrl(formS.imagen) && (
+              <div className="mt-3">
+                <p className="text-xs uppercase tracking-wider text-charcoal-400 font-sans mb-1">Vista previa</p>
+                <div className="w-32 aspect-[4/3] overflow-hidden rounded-sm bg-ivory-100 border border-ivory-200">
+                  <img
+                    src={formS.imagen}
+                    alt="Vista previa"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
+
+          <div className="flex items-center gap-3">
+            <input
+              id="activo-toggle"
+              type="checkbox"
+              checked={formS.activo}
+              onChange={(e) => setFormS({ ...formS, activo: e.target.checked })}
+              className="h-4 w-4"
+            />
+            <label htmlFor="activo-toggle" className="text-sm text-charcoal-700 font-sans cursor-pointer">
+              Servicio activo (visible al público)
+            </label>
+          </div>
+
+          <div>
+            <label className="form-label">Orden</label>
+            <input
+              type="number"
+              min={1}
+              className="input-field"
+              value={formS.orden}
+              onChange={(e) => setFormS({ ...formS, orden: Number(e.target.value) || 1 })}
+            />
+            {fieldErrors.orden && (
+              <p className="text-xs text-red-500 mt-1 font-sans">{fieldErrors.orden}</p>
+            )}
+          </div>
+
           <div className="flex gap-3 pt-2">
             <button onClick={saveService} disabled={saving || !formS.titulo.trim()} className="btn-primary flex-1">
               {saving ? 'Guardando...' : 'Guardar'}

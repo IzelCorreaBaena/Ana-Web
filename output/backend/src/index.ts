@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import path from 'path';
 import express, { Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -14,6 +15,7 @@ import servicesRoutes from './routes/services.routes';
 import blocksRoutes from './routes/blocks.routes';
 import reservationsRoutes from './routes/reservations.routes';
 import calendarRoutes from './routes/calendar.routes';
+import uploadsRoutes from './routes/uploads.routes';
 
 const app: Express = express();
 
@@ -114,12 +116,16 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Serve uploaded images as static files.
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/services', servicesRoutes);
 app.use('/api/blocks', blocksRoutes);
 app.use('/api/reservations', reservationsRoutes);
 app.use('/api/calendar', calendarRoutes);
+app.use('/api/uploads', uploadsRoutes);
 
 // 404 & error handlers (must be last)
 app.use(notFoundHandler);

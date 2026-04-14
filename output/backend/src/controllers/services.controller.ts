@@ -3,6 +3,10 @@ import { z } from 'zod';
 import { prisma } from '../config/prisma';
 import { AppError } from '../middleware/errorHandler';
 
+const listQuerySchema = z.object({
+  all: z.coerce.boolean().optional(),
+});
+
 const servicioSchema = z.object({
   titulo: z.string().trim().min(1).max(150),
   descripcion: z.string().trim().max(5000).optional().default(''),
@@ -14,11 +18,22 @@ const servicioSchema = z.object({
 const idParamSchema = z.object({ id: z.string().uuid() });
 
 export const servicesController = {
-  list: (async (_req, res, next) => {
+  list: (async (req, res, next) => {
     try {
+      const { all } = listQuerySchema.parse(req.query);
+      // Skip the activo filter only when the caller is authenticated AND
+      // explicitly requests all records. Public callers always see active only.
+      const isAdmin = Boolean(req.admin);
+      const showAll = all === true && isAdmin;
+
       const servicios = await prisma.servicio.findMany({
-        where: { activo: true },
-        include: { bloques: { where: { activo: true }, orderBy: { orden: 'asc' } } },
+        where: showAll ? undefined : { activo: true },
+        include: {
+          bloques: {
+            where: showAll ? undefined : { activo: true },
+            orderBy: { orden: 'asc' },
+          },
+        },
         orderBy: { orden: 'asc' },
       });
       res.json(servicios);
