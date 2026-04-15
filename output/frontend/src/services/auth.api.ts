@@ -1,5 +1,5 @@
 import { http } from './http';
-import type { Admin } from '@types/models';
+import type { Admin } from '@app-types/models';
 
 export interface LoginResponse {
   token: string;

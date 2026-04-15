@@ -102,7 +102,7 @@ export default function Contact() {
             {/* Formulario */}
             <div className="bg-ivory-50 rounded-sm p-8 lg:p-10">
               <h2 className="font-serif text-2xl text-charcoal-800 mb-6">Envíame un mensaje</h2>
-              <ContactForm fallbackEmail="ana@anacastellano.com" />
+              <ContactForm mailtoAddress="ana@anacastellano.com" />
               <p className="mt-6 text-xs text-charcoal-400 leading-relaxed">
                 Al enviar este formulario aceptas nuestra política de privacidad. Tus datos se usarán
                 exclusivamente para responder a tu consulta y nunca serán cedidos a terceros.

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { servicesApi } from '@services/services.api';
 import { blocksApi } from '@services/blocks.api';
-import type { Servicio } from '@types/models';
+import type { Servicio } from '@app-types/models';
 import Modal from '../../components/ui/Modal';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useToast } from '../../hooks/useToast';

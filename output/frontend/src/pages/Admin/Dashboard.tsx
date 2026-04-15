@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { reservationsApi } from '@services/reservations.api';
-import type { Reserva } from '@types/models';
+import type { Reserva } from '@app-types/models';
 import Badge from '../../components/ui/Badge';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
