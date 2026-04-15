@@ -66,7 +66,7 @@ export const reservationsController = {
         prisma.reserva.count({ where }),
       ]);
 
-      res.json({ data: reservas, pagination: { page, limit, total } });
+      res.json({ data: reservas, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
     } catch (e) { next(e); }
   }) as RequestHandler,
 

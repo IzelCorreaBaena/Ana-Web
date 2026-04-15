@@ -1,6 +1,7 @@
 import { ErrorRequestHandler } from 'express';
 import { ZodError } from 'zod';
 import { Prisma } from '@prisma/client';
+import multer from 'multer';
 import { env } from '../config/env';
 
 // ─── Custom error class ───────────────────────────────────────────────────────
@@ -64,6 +65,14 @@ function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): {
 export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
   if (res.headersSent) return _next(err);
   const isProd = env.NODE_ENV === 'production';
+
+  // Multer error — file too large, wrong type, etc.
+  if (err instanceof multer.MulterError) {
+    const message = err.code === 'LIMIT_FILE_SIZE'
+      ? 'El archivo supera el tamaño máximo permitido (5 MB)'
+      : `Error al subir el archivo: ${err.message}`;
+    return res.status(400).json({ success: false, error: message, code: 'UPLOAD_ERROR' });
+  }
 
   // Zod validation error — return 400 with per-field messages
   if (err instanceof ZodError) {

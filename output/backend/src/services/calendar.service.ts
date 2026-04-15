@@ -62,6 +62,10 @@ export const calendarService = {
     // If no exact time is known, create an all-day event on the event date
     const fecha = reserva.fechaEvento ?? new Date();
     const startDate = fecha.toISOString().split('T')[0]; // YYYY-MM-DD
+    // Google Calendar all-day events require end.date to be the day *after* start (exclusive).
+    const endDateObj = new Date(fecha);
+    endDateObj.setUTCDate(endDateObj.getUTCDate() + 1);
+    const endDate = endDateObj.toISOString().split('T')[0];
 
     const summary = reserva.servicioNombre
       ? `${reserva.servicioNombre} — ${reserva.nombre}`
@@ -92,7 +96,7 @@ export const calendarService = {
                 dateTime: new Date(reserva.fechaEvento.getTime() + 2 * 60 * 60 * 1000).toISOString(),
                 timeZone: 'Europe/Madrid',
               }
-            : { date: startDate },
+            : { date: endDate },
           reminders: {
             useDefault: false,
             overrides: [

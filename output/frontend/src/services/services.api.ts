@@ -38,9 +38,9 @@ export const servicesApi = {
   async uploadImage(file: File): Promise<{ url: string }> {
     const formData = new FormData();
     formData.append('image', file);
-    const { data } = await http.post<{ url: string }>('/uploads/image', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    // Do NOT set Content-Type manually — axios will add the correct
+    // multipart boundary automatically when the body is a FormData instance.
+    const { data } = await http.post<{ url: string }>('/uploads/image', formData);
     return data;
   },
 };

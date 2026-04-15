@@ -1,30 +1,61 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { reservationsApi } from '@services/reservations.api';
-import type { Reserva } from '@types/models';
+import type { EstadoReserva, PaginationMeta, Reserva } from '@types/models';
 import Badge from '../../components/ui/Badge';
 import Modal from '../../components/ui/Modal';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useToast } from '../../hooks/useToast';
 
-type FiltroEstado = 'TODAS' | 'PENDIENTE' | 'ACEPTADA' | 'RECHAZADA';
+type FiltroEstado = 'TODAS' | EstadoReserva;
+
+const PAGE_LIMIT = 20;
+
+const EMPTY_PAGINATION: PaginationMeta = {
+  page: 1,
+  limit: PAGE_LIMIT,
+  total: 0,
+  totalPages: 0,
+};
 
 export default function AdminReservations() {
   const { success, error: toastError } = useToast();
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [filtro, setFiltro] = useState<FiltroEstado>('TODAS');
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationMeta>(EMPTY_PAGINATION);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Reserva | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  const fetchReservas = () => {
+  const fetchReservas = useCallback(() => {
     setLoading(true);
-    reservationsApi.list()
-      .then((res) => setReservas(res.data))
-      .catch(() => toastError('Error al cargar reservas'))
+    setFetchError(null);
+    const params: { estado?: EstadoReserva; page: number; limit: number } = {
+      page,
+      limit: PAGE_LIMIT,
+    };
+    if (filtro !== 'TODAS') params.estado = filtro;
+    reservationsApi.list(params)
+      .then((res) => {
+        setReservas(res.data);
+        setPagination(res.pagination);
+      })
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : 'Error desconocido';
+        setFetchError(`No pudimos cargar las reservas: ${msg}`);
+        toastError('Error al cargar reservas');
+      })
       .finally(() => setLoading(false));
-  };
+  }, [filtro, page, toastError]);
 
-  useEffect(() => { fetchReservas(); }, []);
+  useEffect(() => { fetchReservas(); }, [fetchReservas]);
+
+  // Reset to page 1 whenever the estado filter changes.
+  const selectFiltro = (value: FiltroEstado) => {
+    setFiltro(value);
+    setPage(1);
+  };
 
   const cambiarEstado = async (id: string, estado: 'ACEPTADA' | 'RECHAZADA') => {
     setActionLoading(id + estado);
@@ -40,10 +71,6 @@ export default function AdminReservations() {
     }
   };
 
-  const reservasFiltradas = filtro === 'TODAS'
-    ? reservas
-    : reservas.filter((r) => r.estado === filtro);
-
   const filtros: { label: string; value: FiltroEstado }[] = [
     { label: 'Todas', value: 'TODAS' },
     { label: 'Pendientes', value: 'PENDIENTE' },
@@ -56,7 +83,7 @@ export default function AdminReservations() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-serif text-3xl text-charcoal-800">Reservas</h1>
-          <p className="text-charcoal-500 mt-1 font-sans text-sm">{reservas.length} solicitudes en total</p>
+          <p className="text-charcoal-500 mt-1 font-sans text-sm">{pagination.total} solicitudes en total</p>
         </div>
         <button onClick={fetchReservas} className="btn-secondary text-sm">
           Actualizar
@@ -68,7 +95,7 @@ export default function AdminReservations() {
         {filtros.map((f) => (
           <button
             key={f.value}
-            onClick={() => setFiltro(f.value)}
+            onClick={() => selectFiltro(f.value)}
             className={`px-4 py-1.5 rounded-full text-sm font-sans transition-colors ${
               filtro === f.value
                 ? 'bg-sage-600 text-white'
@@ -80,11 +107,20 @@ export default function AdminReservations() {
         ))}
       </div>
 
+      {fetchError && (
+        <p
+          role="alert"
+          className="text-sm text-red-700 bg-red-50 border border-red-200 rounded px-4 py-3"
+        >
+          {fetchError}
+        </p>
+      )}
+
       {/* Tabla */}
       <div className="bg-white rounded-sm border border-ivory-200 overflow-hidden">
         {loading ? (
           <div className="flex justify-center py-16"><LoadingSpinner size="lg" /></div>
-        ) : reservasFiltradas.length === 0 ? (
+        ) : reservas.length === 0 ? (
           <p className="text-center text-charcoal-400 py-16 font-sans">No hay reservas con este filtro.</p>
         ) : (
           <div className="overflow-x-auto">
@@ -100,7 +136,7 @@ export default function AdminReservations() {
                 </tr>
               </thead>
               <tbody>
-                {reservasFiltradas.map((r) => (
+                {reservas.map((r) => (
                   <tr key={r.id}>
                     <td>
                       <div>
@@ -152,6 +188,31 @@ export default function AdminReservations() {
           </div>
         )}
       </div>
+
+      {/* Paginación */}
+      {!loading && pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm font-sans">
+          <p className="text-charcoal-500">
+            Página {pagination.page} de {pagination.totalPages} · {pagination.total} resultados
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={pagination.page <= 1}
+              className="px-3 py-1.5 rounded border border-ivory-200 text-charcoal-600 hover:border-sage-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              ← Anterior
+            </button>
+            <button
+              onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
+              disabled={pagination.page >= pagination.totalPages}
+              className="px-3 py-1.5 rounded border border-ivory-200 text-charcoal-600 hover:border-sage-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Siguiente →
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Modal detalle */}
       <Modal isOpen={!!selected} onClose={() => setSelected(null)} title="Detalle de reserva" dismissOnBackdrop={false}>

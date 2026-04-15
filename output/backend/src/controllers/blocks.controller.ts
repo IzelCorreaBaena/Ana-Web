@@ -8,7 +8,9 @@ const idParamSchema = z.object({ id: z.string().uuid() });
 const bloqueSchema = z.object({
   titulo: z.string().trim().min(1).max(150),
   descripcion: z.string().trim().max(5000).optional().default(''),
-  imagenes: z.array(z.string().url()).default([]),
+  // Accept any non-empty string: full URLs (Cloudinary, etc.) and relative paths
+  // like /uploads/<filename> produced by the local upload endpoint.
+  imagenes: z.array(z.string().min(1)).default([]),
   orden: z.number().int().optional(),
   activo: z.boolean().optional(),
   servicioId: z.string().uuid(),
@@ -41,11 +43,10 @@ export const blocksController = {
     try {
       const data = bloqueSchema.parse(req.body);
       const bloque = await prisma.$transaction(async (tx) => {
-        if (data.orden === undefined) {
-          const count = await tx.bloque.count({ where: { servicioId: data.servicioId } });
-          data.orden = count + 1;
-        }
-        return tx.bloque.create({ data });
+        const orden = data.orden !== undefined
+          ? data.orden
+          : (await tx.bloque.count({ where: { servicioId: data.servicioId } })) + 1;
+        return tx.bloque.create({ data: { ...data, orden } });
       });
       res.status(201).json(bloque);
     } catch (e) { next(e); }

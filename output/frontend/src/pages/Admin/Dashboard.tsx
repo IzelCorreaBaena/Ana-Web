@@ -19,15 +19,22 @@ export default function AdminDashboard() {
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
-    reservationsApi.list()
-      .then((res) => {
-        const all = res.data;
-        setReservas(all);
+    // Stats must reflect TOTALS across all pages, not only the current page,
+    // so we fetch the recent list (for preview) plus per-estado counts in
+    // parallel and read `pagination.total` from each envelope.
+    Promise.all([
+      reservationsApi.list({ page: 1, limit: 5 }),
+      reservationsApi.list({ estado: 'PENDIENTE', page: 1, limit: 1 }),
+      reservationsApi.list({ estado: 'ACEPTADA', page: 1, limit: 1 }),
+      reservationsApi.list({ estado: 'RECHAZADA', page: 1, limit: 1 }),
+    ])
+      .then(([recent, pend, acep, rech]) => {
+        setReservas(recent.data);
         setStats({
-          total: res.pagination.total,
-          pendientes: all.filter((r) => r.estado === 'PENDIENTE').length,
-          aceptadas: all.filter((r) => r.estado === 'ACEPTADA').length,
-          rechazadas: all.filter((r) => r.estado === 'RECHAZADA').length,
+          total: recent.pagination.total,
+          pendientes: pend.pagination.total,
+          aceptadas: acep.pagination.total,
+          rechazadas: rech.pagination.total,
         });
         setFetchError(null);
       })
