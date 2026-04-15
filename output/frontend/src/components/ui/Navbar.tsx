@@ -89,13 +89,15 @@ export default function Navbar({
 
       {/* Mobile drawer */}
       <div
-        className={`fixed inset-0 z-modal md:hidden transition-opacity duration-slow ${
-          open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        className={`fixed inset-0 z-modal md:hidden ${
+          open ? 'pointer-events-auto' : 'pointer-events-none'
         }`}
         aria-hidden={!open}
       >
         <div
-          className="absolute inset-0 bg-charcoal-900/40 backdrop-blur-sm"
+          className={`absolute inset-0 bg-charcoal-900/40 backdrop-blur-sm transition-opacity duration-slow ${
+            open ? 'opacity-100' : 'opacity-0'
+          }`}
           onClick={() => setOpen(false)}
         />
         <aside

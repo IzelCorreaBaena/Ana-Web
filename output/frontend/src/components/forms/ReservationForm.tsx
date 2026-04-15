@@ -26,6 +26,13 @@ interface FormState {
 
 type FieldErrors = Partial<Record<keyof FormState, string>>;
 
+// Sanitizers: strip disallowed chars on input.
+const sanitizeName = (v: string): string =>
+  v.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s-]/g, '');
+const sanitizePhone = (v: string): string => v.replace(/[^\d+\s\-()]/g, '');
+const sanitizeText = (v: string): string =>
+  v.replace(/[^A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ\s,.!?\-'"\n\r]/g, '');
+
 const INITIAL: FormState = {
   nombre: '',
   telefono: '',
@@ -149,7 +156,7 @@ export default function ReservationForm({
           autoComplete="name"
           className={`input-field ${errors.nombre ? 'input-error' : ''}`}
           value={state.nombre}
-          onChange={(e) => update('nombre', e.target.value)}
+          onChange={(e) => update('nombre', sanitizeName(e.target.value))}
         />
         {errors.nombre && <p className="form-error">{errors.nombre}</p>}
       </div>
@@ -177,7 +184,7 @@ export default function ReservationForm({
             maxLength={25}
             className={`input-field ${errors.telefono ? 'input-error' : ''}`}
             value={state.telefono}
-            onChange={(e) => update('telefono', e.target.value)}
+            onChange={(e) => update('telefono', sanitizePhone(e.target.value))}
           />
           {errors.telefono && <p className="form-error">{errors.telefono}</p>}
         </div>
@@ -226,7 +233,7 @@ export default function ReservationForm({
           className={`input-field ${errors.mensaje ? 'input-error' : ''}`}
           placeholder="Cuéntanos sobre tu evento, estilo deseado, número de invitados…"
           value={state.mensaje}
-          onChange={(e) => update('mensaje', e.target.value)}
+          onChange={(e) => update('mensaje', sanitizeText(e.target.value))}
         />
         {errors.mensaje && <p className="form-error">{errors.mensaje}</p>}
       </div>

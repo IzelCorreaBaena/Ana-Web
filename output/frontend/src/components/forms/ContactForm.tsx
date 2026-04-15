@@ -14,6 +14,12 @@ interface FormState {
 
 type FieldErrors = Partial<Record<keyof FormState, string>>;
 
+// Sanitizers: strip disallowed chars on input.
+const sanitizeName = (v: string): string =>
+  v.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s-]/g, '');
+const sanitizeText = (v: string): string =>
+  v.replace(/[^A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ\s,.!?\-'"\n\r]/g, '');
+
 const INITIAL: FormState = { nombre: '', email: '', mensaje: '' };
 const DEFAULT_MAILTO = 'hola@anacastellano.com';
 
@@ -81,7 +87,7 @@ export default function ContactForm({
           autoComplete="name"
           className={`input-field ${errors.nombre ? 'input-error' : ''}`}
           value={state.nombre}
-          onChange={(e) => update('nombre', e.target.value)}
+          onChange={(e) => update('nombre', sanitizeName(e.target.value))}
         />
         {errors.nombre && <p className="form-error">{errors.nombre}</p>}
       </div>
@@ -106,7 +112,7 @@ export default function ContactForm({
           rows={5}
           className={`input-field ${errors.mensaje ? 'input-error' : ''}`}
           value={state.mensaje}
-          onChange={(e) => update('mensaje', e.target.value)}
+          onChange={(e) => update('mensaje', sanitizeText(e.target.value))}
         />
         {errors.mensaje && <p className="form-error">{errors.mensaje}</p>}
       </div>
