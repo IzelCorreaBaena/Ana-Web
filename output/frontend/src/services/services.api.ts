@@ -3,7 +3,7 @@ import type {
   Servicio,
   CreateServicioPayload,
   UpdateServicioPayload,
-} from '@types/models';
+} from '@app-types/models';
 
 export const servicesApi = {
   async list(): Promise<Servicio[]> {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { reservationsApi } from '@services/reservations.api';
-import type { EstadoReserva, PaginationMeta, Reserva } from '@types/models';
+import type { EstadoReserva, PaginationMeta, Reserva } from '@app-types/models';
 import Badge from '../../components/ui/Badge';
 import Modal from '../../components/ui/Modal';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';

@@ -5,7 +5,7 @@ import type {
   UpdateReservaPayload,
   EstadoReserva,
   PaginatedResponse,
-} from '@types/models';
+} from '@app-types/models';
 
 export const reservationsApi = {
   async list(params?: { estado?: EstadoReserva; page?: number; limit?: number }): Promise<PaginatedResponse<Reserva>> {

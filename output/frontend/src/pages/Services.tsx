@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { servicesApi } from '@services/services.api';
-import type { Servicio } from '@types/models';
+import type { Servicio } from '@app-types/models';
 import SectionHeader from '../components/ui/SectionHeader';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 

@@ -1,5 +1,5 @@
 import { http } from './http';
-import type { Bloque, CreateBloquePayload, UpdateBloquePayload } from '@types/models';
+import type { Bloque, CreateBloquePayload, UpdateBloquePayload } from '@app-types/models';
 
 export const blocksApi = {
   async create(payload: CreateBloquePayload): Promise<Bloque> {
