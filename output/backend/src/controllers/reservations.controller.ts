@@ -107,6 +107,10 @@ export const reservationsController = {
         console.error('[email] failed to send confirmation', err);
       });
 
+      emailService.sendAdminNewReservation({ ...reserva, telefono: reserva.telefono, mensaje: reserva.mensaje }).catch((err) => {
+        console.error('[email] failed to send admin notification', err);
+      });
+
       res.status(201).json(reserva);
     } catch (e) { next(e); }
   }) as RequestHandler,

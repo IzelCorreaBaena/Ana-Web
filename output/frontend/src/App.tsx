@@ -8,6 +8,7 @@ import AdminLogin from '@pages/Admin/Login';
 import AdminDashboard from '@pages/Admin/Dashboard';
 import AdminServices from '@pages/Admin/Services';
 import AdminReservations from '@pages/Admin/Reservations';
+import AdminPresupuestos from '@pages/Admin/Presupuestos';
 import PublicLayout from '@components/layouts/PublicLayout';
 import AdminLayout from '@components/layouts/AdminLayout';
 import ProtectedRoute from '@components/ProtectedRoute';
@@ -40,6 +41,7 @@ function App() {
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="services" element={<AdminServices />} />
         <Route path="reservations" element={<AdminReservations />} />
+        <Route path="presupuestos" element={<AdminPresupuestos />} />
       </Route>
 
       {/* Fallback */}

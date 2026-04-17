@@ -123,3 +123,41 @@ model Reserva {
   @@index([estado, createdAt], name: "idx_reservas_estado_created_at")
   @@map("reservas")
 }
+
+// =============================================================================
+// PRESUPUESTO
+// =============================================================================
+model Presupuesto {
+  id              String   @id @default(uuid()) @db.Uuid
+  numero          Int      @unique @default(autoincrement())
+  clienteNombre   String   @db.VarChar(150) @map("cliente_nombre")
+  clienteEmail    String?  @db.VarChar(255) @map("cliente_email")
+  clienteTelefono String?  @db.VarChar(25)  @map("cliente_telefono")
+  items           Json
+  subtotal        Decimal  @db.Decimal(10,2)
+  igicPorcentaje  Decimal  @db.Decimal(5,2) @map("igic_porcentaje")
+  igicImporte     Decimal  @db.Decimal(10,2) @map("igic_importe")
+  total           Decimal  @db.Decimal(10,2)
+  notas           String?  @db.Text
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@index([createdAt], name: "idx_presupuestos_created_at")
+  @@map("presupuestos")
+}
+
+// =============================================================================
+// MENSAJE
+// =============================================================================
+model Mensaje {
+  id        String   @id @default(uuid()) @db.Uuid
+  nombre    String   @db.VarChar(150)
+  email     String   @db.VarChar(255)
+  telefono  String?  @db.VarChar(25)
+  mensaje   String   @db.Text
+  leido     Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@index([leido], name: "idx_mensajes_leido")
+  @@index([createdAt], name: "idx_mensajes_created_at")
+  @@map("mensajes")
+}

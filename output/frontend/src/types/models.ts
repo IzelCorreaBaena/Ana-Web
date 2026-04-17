@@ -129,3 +129,61 @@ export type Block = Bloque;
 
 /** @deprecated Use Admin */
 export type User = Admin;
+
+// ---------------------------------------------------------------------------
+// Contacto (public messages)
+// ---------------------------------------------------------------------------
+
+export interface Mensaje {
+  id: string;
+  nombre: string;
+  email: string;
+  telefono?: string | null;
+  mensaje: string;
+  leido: boolean;
+  createdAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Presupuestos
+// ---------------------------------------------------------------------------
+
+export interface PresupuestoItem {
+  descripcion: string;
+  cantidad: number;
+  precioUnitario: number;
+}
+
+export interface Presupuesto {
+  id: string;
+  numero: number;
+  clienteNombre: string;
+  clienteEmail?: string | null;
+  clienteTelefono?: string | null;
+  items: PresupuestoItem[];
+  subtotal: number;
+  igicPorcentaje: number;
+  igicImporte: number;
+  total: number;
+  notas?: string | null;
+  createdAt: string;
+}
+
+export interface PresupuestoListItem {
+  id: string;
+  numero: number;
+  clienteNombre: string;
+  clienteEmail?: string | null;
+  total: number;
+  createdAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Notifications summary
+// ---------------------------------------------------------------------------
+
+export interface NotificationsSummary {
+  pendingReservations: number;
+  unreadMessages: number;
+  total: number;
+}

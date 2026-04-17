@@ -20,6 +20,7 @@ const schema = z.object({
   GOOGLE_CLIENT_EMAIL: z.string().email().optional(),
   GOOGLE_PRIVATE_KEY: z.string().optional(),
   GOOGLE_CALENDAR_ID: z.string().optional(),
+  ADMIN_EMAIL: z.string().email().optional(),
 });
 
 const parsed = schema.safeParse(process.env);

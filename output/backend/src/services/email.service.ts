@@ -160,6 +160,47 @@ export const emailService = {
     await this.send(reserva.email, subject, html);
   },
 
+  /** Sent to the admin when a new reservation is submitted by a client. */
+  async sendAdminNewReservation(reserva: ReservaEmailPayload & { telefono?: string; mensaje?: string }): Promise<void> {
+    const adminEmail = env.ADMIN_EMAIL || 'hola@anacastellano.com';
+    const subject = `Nueva reserva — ${escHtml(reserva.nombre)}`;
+    const fecha = formatFecha(reserva.fechaEvento);
+    const html = emailWrapper(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:normal;color:${COLOR.charcoal};">Nueva solicitud de reserva</h2>
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;background-color:${COLOR.ivory};border-left:3px solid ${COLOR.gold};padding:20px 24px;">
+        <tr><td>
+          <p style="margin:0 0 8px;"><strong>Nombre:</strong> ${escHtml(reserva.nombre)}</p>
+          <p style="margin:0 0 8px;"><strong>Email:</strong> ${escHtml(reserva.email)}</p>
+          ${reserva.telefono ? `<p style="margin:0 0 8px;"><strong>Teléfono:</strong> ${escHtml(reserva.telefono)}</p>` : ''}
+          <p style="margin:0 0 8px;"><strong>Fecha del evento:</strong> ${escHtml(fecha)}</p>
+          ${reserva.servicioNombre ? `<p style="margin:0 0 8px;"><strong>Servicio:</strong> ${escHtml(reserva.servicioNombre)}</p>` : ''}
+          ${reserva.mensaje ? `<p style="margin:0;"><strong>Mensaje:</strong> ${escHtml(reserva.mensaje)}</p>` : ''}
+        </td></tr>
+      </table>
+      <p style="margin:0;font-size:13px;color:#888;">Accede al panel de administración para gestionar esta reserva.</p>
+    `);
+    await this.send(adminEmail, subject, html);
+  },
+
+  /** Sent to the admin when a new contact message is submitted. */
+  async sendAdminNewMensaje(msg: { nombre: string; email: string; telefono?: string | null; mensaje: string }): Promise<void> {
+    const adminEmail = env.ADMIN_EMAIL || 'hola@anacastellano.com';
+    const subject = `Nuevo mensaje de contacto — ${escHtml(msg.nombre)}`;
+    const html = emailWrapper(`
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:normal;color:${COLOR.charcoal};">Nuevo mensaje de contacto</h2>
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;background-color:${COLOR.ivory};border-left:3px solid ${COLOR.gold};padding:20px 24px;">
+        <tr><td>
+          <p style="margin:0 0 8px;"><strong>Nombre:</strong> ${escHtml(msg.nombre)}</p>
+          <p style="margin:0 0 8px;"><strong>Email:</strong> ${escHtml(msg.email)}</p>
+          ${msg.telefono ? `<p style="margin:0 0 8px;"><strong>Teléfono:</strong> ${escHtml(msg.telefono)}</p>` : ''}
+          <p style="margin:0;"><strong>Mensaje:</strong> ${escHtml(msg.mensaje)}</p>
+        </td></tr>
+      </table>
+      <p style="margin:0;font-size:13px;color:#888;">Accede al panel de administración para ver todos los mensajes.</p>
+    `);
+    await this.send(adminEmail, subject, html);
+  },
+
   /** Sent when the admin rejects a reservation (estado → RECHAZADA). */
   async sendRejectedEmail(reserva: ReservaEmailPayload, motivo?: string | null): Promise<void> {
     const subject = 'Sobre tu solicitud de reserva — Ana Castellano Florista';
