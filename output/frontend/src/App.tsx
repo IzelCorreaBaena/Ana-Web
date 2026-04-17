@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import Home from '@pages/Home';
 import About from '@pages/About';
 import Services from '@pages/Services';
@@ -15,38 +16,41 @@ import ProtectedRoute from '@components/ProtectedRoute';
 
 function App() {
   return (
-    <Routes>
-      {/* Public routes */}
-      <Route element={<PublicLayout />}>
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/services" element={<Services />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/reservations" element={<Reservations />} />
-      </Route>
+    <>
+      <Routes>
+        {/* Public routes */}
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/services" element={<Services />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/reservations" element={<Reservations />} />
+        </Route>
 
-      {/* Admin auth */}
-      <Route path="/admin/login" element={<AdminLogin />} />
+        {/* Admin auth */}
+        <Route path="/admin/login" element={<AdminLogin />} />
 
-      {/* Protected admin routes */}
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute>
-            <AdminLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<AdminDashboard />} />
-        <Route path="services" element={<AdminServices />} />
-        <Route path="reservations" element={<AdminReservations />} />
-        <Route path="presupuestos" element={<AdminPresupuestos />} />
-      </Route>
+        {/* Protected admin routes */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="services" element={<AdminServices />} />
+          <Route path="reservations" element={<AdminReservations />} />
+          <Route path="presupuestos" element={<AdminPresupuestos />} />
+        </Route>
 
-      {/* Fallback */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <SpeedInsights />
+    </>
   );
 }
 
